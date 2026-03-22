@@ -376,25 +376,11 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYXQgFNtpXxP_SXfNj6BwYxhwNyBi-5CEW-IKJ1GDgeeuLfv7Fv0nL51l_Gnef30Kn/exec";
-    const SCAN_FORMATS = window.Html5QrcodeSupportedFormats ? [
-      Html5QrcodeSupportedFormats.QR_CODE,
-      Html5QrcodeSupportedFormats.CODE_128,
-      Html5QrcodeSupportedFormats.CODE_39,
-      Html5QrcodeSupportedFormats.CODE_93,
-      Html5QrcodeSupportedFormats.CODABAR,
-      Html5QrcodeSupportedFormats.ITF,
-      Html5QrcodeSupportedFormats.EAN_13,
-      Html5QrcodeSupportedFormats.EAN_8,
-      Html5QrcodeSupportedFormats.UPC_A,
-      Html5QrcodeSupportedFormats.UPC_E,
-      Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
-      Html5QrcodeSupportedFormats.PDF_417,
-      Html5QrcodeSupportedFormats.DATA_MATRIX
-    ].filter((format) => typeof format === "number") : undefined;
     let qrCodeScanner = null;
     let cameraRunning = false;
     let torchSupported = false;
     let torchEnabled = false;
+    let scannerLibraryReady = false;
 
     const readerId = "reader";
     const locationField = document.getElementById("location");
@@ -418,6 +404,36 @@
 
     function getReaderVideo() {
       return document.querySelector(`#${readerId} video`);
+    }
+
+    function getSupportedFormats() {
+      if (!window.Html5QrcodeSupportedFormats) {
+        return undefined;
+      }
+
+      return [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.CODE_93,
+        Html5QrcodeSupportedFormats.CODABAR,
+        Html5QrcodeSupportedFormats.ITF,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
+        Html5QrcodeSupportedFormats.PDF_417,
+        Html5QrcodeSupportedFormats.DATA_MATRIX
+      ].filter((format) => typeof format === "number");
+    }
+
+    function getScannerInstance() {
+      const formatsToSupport = getSupportedFormats();
+      return new Html5Qrcode(
+        readerId,
+        formatsToSupport ? { formatsToSupport } : undefined
+      );
     }
 
     function getScanBox(viewfinderWidth, viewfinderHeight) {
@@ -445,7 +461,7 @@
     function updateTorchButton() {
       if (!cameraRunning) {
         torchBtn.disabled = true;
-        torchBtn.textContent = "Flash indisponible";
+        torchBtn.textContent = "Flash";
         return;
       }
 
@@ -474,6 +490,23 @@
       }
 
       updateTorchButton();
+    }
+
+    async function startScannerWithConfig(cameraConfig, scanConfig) {
+      qrCodeScanner = getScannerInstance();
+
+      await qrCodeScanner.start(
+        cameraConfig,
+        scanConfig,
+        async (decodedText) => {
+          resultField.value = decodedText;
+          setStatus("Code détecté. Envoi vers Google Sheets en cours...", "");
+          await stopCamera();
+          await sendToGoogleSheets(decodedText);
+          setControls();
+        },
+        () => {}
+      );
     }
 
     async function setTorch(enabled) {
@@ -629,30 +662,67 @@
         return;
       }
 
+      if (!window.Html5Qrcode || typeof window.Html5Qrcode !== "function") {
+        setStatus("La librairie de scan n'est pas encore chargée. Recharge la page puis réessaie.", "error");
+        setControls();
+        return;
+      }
+
       setStatus("Ouverture de la caméra...", "");
 
       try {
         resetTorchState();
-        qrCodeScanner = new Html5Qrcode(readerId, SCAN_FORMATS ? { formatsToSupport: SCAN_FORMATS } : undefined);
-        await qrCodeScanner.start(
-          {
-            facingMode: { ideal: "environment" }
-          },
-          {
-            fps: 12,
-            aspectRatio: 1.7777778,
-            qrbox: getScanBox,
-            disableFlip: false
-          },
-          async (decodedText) => {
-            resultField.value = decodedText;
-            setStatus("Code détecté. Envoi vers Google Sheets en cours...", "");
-            await stopCamera();
-            await sendToGoogleSheets(decodedText);
-            setControls();
-          },
-          () => {}
-        );
+        const preferredScanConfig = {
+          fps: 10,
+          qrbox: getScanBox,
+          disableFlip: false
+        };
+        const fallbackScanConfig = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          disableFlip: false
+        };
+        const cameraAttempts = [
+          { cameraConfig: { facingMode: "environment" }, scanConfig: preferredScanConfig },
+          { cameraConfig: { facingMode: "environment" }, scanConfig: fallbackScanConfig }
+        ];
+        let started = false;
+        let lastError = null;
+
+        for (const attempt of cameraAttempts) {
+          try {
+            await startScannerWithConfig(attempt.cameraConfig, attempt.scanConfig);
+            started = true;
+            break;
+          } catch (error) {
+            lastError = error;
+            if (qrCodeScanner) {
+              try {
+                await qrCodeScanner.clear();
+              } catch (clearError) {}
+            }
+            qrCodeScanner = null;
+          }
+        }
+
+        if (!started && typeof Html5Qrcode.getCameras === "function") {
+          try {
+            const cameras = await Html5Qrcode.getCameras();
+            const rearCamera = cameras.find((camera) => /back|rear|environment/gi.test(camera.label || ""));
+            const selectedCameraId = (rearCamera || cameras[0] || {}).id;
+
+            if (selectedCameraId) {
+              await startScannerWithConfig(selectedCameraId, preferredScanConfig);
+              started = true;
+            }
+          } catch (error) {
+            lastError = error;
+          }
+        }
+
+        if (!started) {
+          throw lastError || new Error("Aucune caméra compatible n'a pu être ouverte.");
+        }
 
         cameraRunning = true;
         cameraNote.textContent = "Astuce : touche l'image pour tenter une mise au point locale. Les codes-barres horizontaux sont mieux détectés avec un cadrage large.";
@@ -662,6 +732,7 @@
       } catch (error) {
         setStatus("Impossible d'ouvrir la caméra : " + error.message, "error");
         resetTorchState();
+        qrCodeScanner = null;
         cameraRunning = false;
         setControls();
       }
@@ -762,30 +833,41 @@
       await sendToGoogleSheets(manualValue);
     }
 
-    restartBtn.addEventListener("click", restartCamera);
-    stopBtn.addEventListener("click", stopCamera);
-    sendBtn.addEventListener("click", sendToGoogleSheets);
-    torchBtn.addEventListener("click", toggleTorch);
-    manualSendBtn.addEventListener("click", sendManualCode);
-    document.querySelector(".camera").addEventListener("click", focusCameraAtPoint);
-    document.querySelector(".camera").addEventListener("touchend", focusCameraAtPoint, { passive: true });
-    locationField.addEventListener("change", async () => {
-      updateLocationFields();
-      await maybeAutoStartCamera();
-    });
-    chariotNumberField.addEventListener("change", maybeAutoStartCamera);
-    logTypeField.addEventListener("change", maybeAutoStartCamera);
-    otherLocationField.addEventListener("input", async () => {
-      setControls();
-      if (otherLocationField.value.trim()) {
-        await maybeAutoStartCamera();
-      }
-    });
-    resultField.addEventListener("input", setControls);
-    manualCodeField.addEventListener("input", setControls);
+    function bindUi() {
+      if (scannerLibraryReady) return;
+      scannerLibraryReady = true;
 
-    updateLocationFields();
-    setControls();
+      restartBtn.addEventListener("click", restartCamera);
+      stopBtn.addEventListener("click", stopCamera);
+      sendBtn.addEventListener("click", sendToGoogleSheets);
+      torchBtn.addEventListener("click", toggleTorch);
+      manualSendBtn.addEventListener("click", sendManualCode);
+      document.querySelector(".camera").addEventListener("click", focusCameraAtPoint);
+      document.querySelector(".camera").addEventListener("touchend", focusCameraAtPoint, { passive: true });
+      locationField.addEventListener("change", async () => {
+        updateLocationFields();
+        await maybeAutoStartCamera();
+      });
+      chariotNumberField.addEventListener("change", maybeAutoStartCamera);
+      logTypeField.addEventListener("change", maybeAutoStartCamera);
+      otherLocationField.addEventListener("input", async () => {
+        setControls();
+        if (otherLocationField.value.trim()) {
+          await maybeAutoStartCamera();
+        }
+      });
+      resultField.addEventListener("input", setControls);
+      manualCodeField.addEventListener("input", setControls);
+
+      updateLocationFields();
+      setControls();
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", bindUi);
+    } else {
+      bindUi();
+    }
   </script>
 </body>
 </html>

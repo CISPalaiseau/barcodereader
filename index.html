@@ -342,7 +342,7 @@
           <button id="torchBtn" class="secondary" type="button" disabled>Flash indisponible</button>
         </div>
         <p id="cameraNote" class="hint camera-note">
-          Astuce : touche l'image pour tenter une mise au point locale. Les codes-barres horizontaux sont mieux détectés avec un cadrage large.
+          Astuce : touche l'image pour tenter une mise au point locale et double tape pour zoomer si l'appareil le permet.
         </p>
       </div>
 
@@ -381,6 +381,10 @@
     let torchSupported = false;
     let torchEnabled = false;
     let scannerLibraryReady = false;
+    let zoomSupported = false;
+    let zoomLevel = 1;
+    let zoomRange = { min: 1, max: 1, step: 0.5 };
+    let lastCameraTapAt = 0;
 
     const readerId = "reader";
     const locationField = document.getElementById("location");
@@ -456,6 +460,9 @@
     function resetTorchState() {
       torchSupported = false;
       torchEnabled = false;
+      zoomSupported = false;
+      zoomLevel = 1;
+      zoomRange = { min: 1, max: 1, step: 0.5 };
     }
 
     function updateTorchButton() {
@@ -492,6 +499,33 @@
       updateTorchButton();
     }
 
+    async function detectZoomAvailability() {
+      if (!qrCodeScanner || !cameraRunning || typeof qrCodeScanner.getRunningTrackCapabilities !== "function") {
+        zoomSupported = false;
+        return;
+      }
+
+      try {
+        const capabilities = qrCodeScanner.getRunningTrackCapabilities() || {};
+        const zoom = capabilities.zoom;
+
+        if (!zoom || typeof zoom.min !== "number" || typeof zoom.max !== "number") {
+          zoomSupported = false;
+          return;
+        }
+
+        zoomSupported = zoom.max > zoom.min;
+        zoomRange = {
+          min: zoom.min,
+          max: zoom.max,
+          step: typeof zoom.step === "number" && zoom.step > 0 ? zoom.step : 0.5
+        };
+        zoomLevel = zoom.min;
+      } catch (error) {
+        zoomSupported = false;
+      }
+    }
+
     async function startScannerWithConfig(cameraConfig, scanConfig) {
       qrCodeScanner = getScannerInstance();
 
@@ -520,6 +554,45 @@
 
       torchEnabled = enabled;
       updateTorchButton();
+    }
+
+    async function applyZoom(level) {
+      if (!cameraRunning || !qrCodeScanner || !zoomSupported || typeof qrCodeScanner.applyVideoConstraints !== "function") {
+        return false;
+      }
+
+      const clampedLevel = Math.min(Math.max(level, zoomRange.min), zoomRange.max);
+
+      await qrCodeScanner.applyVideoConstraints({
+        advanced: [{ zoom: clampedLevel }]
+      });
+
+      zoomLevel = clampedLevel;
+      return true;
+    }
+
+    async function handleCameraDoubleTap() {
+      if (!cameraRunning) return;
+
+      if (!zoomSupported) {
+        cameraNote.textContent = "Le double tap est détecté, mais le zoom n'est pas disponible sur cet appareil.";
+        return;
+      }
+
+      const baseStep = zoomRange.step || 0.5;
+      const largeStep = Math.max(baseStep, (zoomRange.max - zoomRange.min) / 3 || baseStep);
+      let nextZoom = zoomLevel + largeStep;
+
+      if (nextZoom > zoomRange.max - baseStep / 2) {
+        nextZoom = zoomRange.min;
+      }
+
+      try {
+        await applyZoom(nextZoom);
+        cameraNote.textContent = `Zoom x${zoomLevel.toFixed(1)} appliqué. Double tape encore pour changer le niveau.`;
+      } catch (error) {
+        cameraNote.textContent = "Impossible de modifier le zoom sur cet appareil.";
+      }
     }
 
     async function toggleTorch() {
@@ -599,6 +672,19 @@
       } catch (error) {
         cameraNote.textContent = "La mise au point tactile n'est pas disponible sur cet appareil.";
       }
+    }
+
+    async function handleCameraTap(event) {
+      const now = Date.now();
+
+      if (now - lastCameraTapAt < 300) {
+        lastCameraTapAt = 0;
+        await handleCameraDoubleTap();
+        return;
+      }
+
+      lastCameraTapAt = now;
+      await focusCameraAtPoint(event);
     }
 
     function getResolvedLocation() {
@@ -725,8 +811,9 @@
         }
 
         cameraRunning = true;
-        cameraNote.textContent = "Astuce : touche l'image pour tenter une mise au point locale. Les codes-barres horizontaux sont mieux détectés avec un cadrage large.";
+        cameraNote.textContent = "Astuce : touche l'image pour tenter une mise au point locale et double tape pour zoomer si l'appareil le permet.";
         await detectTorchAvailability();
+        await detectZoomAvailability();
         setStatus("Caméra active. Place le code-barres devant l'objectif.", "");
         setControls();
       } catch (error) {
@@ -842,8 +929,8 @@
       sendBtn.addEventListener("click", sendToGoogleSheets);
       torchBtn.addEventListener("click", toggleTorch);
       manualSendBtn.addEventListener("click", sendManualCode);
-      document.querySelector(".camera").addEventListener("click", focusCameraAtPoint);
-      document.querySelector(".camera").addEventListener("touchend", focusCameraAtPoint, { passive: true });
+      document.querySelector(".camera").addEventListener("click", handleCameraTap);
+      document.querySelector(".camera").addEventListener("touchend", handleCameraTap, { passive: true });
       locationField.addEventListener("change", async () => {
         updateLocationFields();
         await maybeAutoStartCamera();

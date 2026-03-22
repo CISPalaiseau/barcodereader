@@ -1,39 +1,567 @@
-function doPost(e) {
-  try {
-    const spreadsheetId = "1CAfKvnVcZLLuFn1yCWQBiJUmmGWOi8E6tbAI74a_xI0";
-    const sheetName = "MOUVEMENT BAIRS V3";
-
-    const payload = JSON.parse(e.postData.contents || "{}");
-    const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
-    const sheet = spreadsheet.getSheetByName(sheetName);
-
-    if (!sheet) {
-      throw new Error("Feuille introuvable : " + sheetName);
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lecteur QR Code vers Google Sheets</title>
+  <script src="https://unpkg.com/html5-qrcode" defer></script>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --surface: #171a21;
+      --surface-2: #1d212a;
+      --ink: #f3f4f6;
+      --muted: #a1a1aa;
+      --accent: #f3f4f6;
+      --accent-ink: #111318;
+      --accent-glow: rgba(243, 244, 246, 0.08);
+      --border: #2a2f3a;
+      --danger: #fb7185;
+      --ok: #4ade80;
     }
 
-    const timezone = spreadsheet.getSpreadsheetTimeZone() || Session.getScriptTimeZone();
-    const timestamp = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy HH:mm:ss");
-    const firstDataRow = 8;
-    const nextRow = Math.max(sheet.getLastRow() + 1, firstDataRow);
+    * {
+      box-sizing: border-box;
+    }
 
-    sheet.getRange(nextRow, 5, 1, 3).setValues([[
-      timestamp,
-      payload.qrData || "",
-      payload.location || ""
-    ]]);
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
 
-    return ContentService
-      .createTextOutput(JSON.stringify({
-        success: true,
-        message: "Ligne ajoutee dans Google Sheets."
-      }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch (error) {
-    return ContentService
-      .createTextOutput(JSON.stringify({
-        success: false,
-        message: error.message
-      }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
+    .app {
+      width: min(100%, 820px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .intro {
+      color: var(--muted);
+      margin-bottom: 24px;
+      max-width: 60ch;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .section {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    input, textarea, button {
+      font: inherit;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #12151b;
+      color: var(--ink);
+      transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #4b5563;
+      box-shadow: 0 0 0 4px var(--accent-glow);
+      background: #101319;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    select {
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #9ca3af 50%),
+        linear-gradient(135deg, #9ca3af 50%, transparent 50%);
+      background-position:
+        calc(100% - 22px) calc(50% - 3px),
+        calc(100% - 16px) calc(50% - 3px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 44px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease, background 120ms ease, box-shadow 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      transform: none;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 700;
+    }
+
+    .primary:hover {
+      background: #e5e7eb;
+    }
+
+    .secondary {
+      background: #222733;
+      color: var(--ink);
+      font-weight: 600;
+      border: 1px solid var(--border);
+    }
+
+    .camera {
+      overflow: hidden;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0b0d12;
+      min-height: 360px;
+    }
+
+    #reader {
+      width: 100%;
+    }
+
+    .status {
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: #12151b;
+      color: var(--ink);
+      border: 1px solid var(--border);
+    }
+
+    .status.ok {
+      border-color: rgba(74, 222, 128, 0.35);
+      background: rgba(20, 83, 45, 0.2);
+      color: var(--ok);
+    }
+
+    .status.error {
+      border-color: rgba(251, 113, 133, 0.35);
+      background: rgba(136, 19, 55, 0.2);
+      color: var(--danger);
+    }
+
+    .hint {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 16px;
+    }
+
+    .subfields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        padding: 20px;
+        border-radius: 16px;
+      }
+
+      .fields {
+        grid-template-columns: 1fr;
+      }
+
+      .subfields {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>Scanner un QR code</h1>
+    <p class="intro">
+      Choisis un emplacement, la caméra s'ouvre automatiquement, puis le code est envoyé dans Google Sheets. Si besoin, tu peux aussi saisir le numéro manuellement.
+    </p>
+
+    <section class="grid">
+      <div class="section">
+        <div class="fields">
+          <div style="grid-column: 1 / -1;">
+            <label for="location">Emplacement</label>
+            <select id="location">
+              <option value="">Choisir</option>
+              <option value="RESERVE CIS">RESERVE CIS</option>
+              <option value="FPT">FPT</option>
+              <option value="BEA">BEA</option>
+              <option value="EPS">EPS</option>
+              <option value="CCEMS">CCEMS</option>
+              <option value="VAR">VAR</option>
+              <option value="CHARIOT">CHARIOT</option>
+              <option value="LOG">LOG</option>
+              <option value="RESERVE TAMPON">RESERVE TAMPON</option>
+              <option value="PLUS PRESENT AU CS">PLUS PRÉSENT AU CS</option>
+              <option value="AUTRE">AUTRE</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="subfields" class="subfields hidden" style="margin-top: 16px;">
+          <div id="chariotWrap" class="hidden">
+            <label for="chariotNumber">Numero de chariot</label>
+            <select id="chariotNumber">
+              <option value="">Choisir</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+            </select>
+          </div>
+
+          <div id="logWrap" class="hidden">
+            <label for="logType">Type de LOG</label>
+            <select id="logType">
+              <option value="">Choisir</option>
+              <option value="GONFLAGE">GONFLAGE</option>
+              <option value="MAINTENANCE">MAINTENANCE</option>
+            </select>
+          </div>
+
+          <div id="otherWrap" class="hidden" style="grid-column: 1 / -1;">
+            <label for="otherLocation">Preciser l'emplacement</label>
+            <input id="otherLocation" type="text" placeholder="Saisir l'emplacement">
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2 class="section-title">Caméra</h2>
+        <div class="camera">
+          <div id="reader"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="actions">
+          <button id="restartBtn" class="primary" type="button" disabled>Scanner un autre code</button>
+          <button id="stopBtn" class="secondary" type="button" disabled>Arrêter</button>
+          <button id="sendBtn" class="secondary" type="button" disabled>Réenvoyer</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2 class="section-title">Dernier code</h2>
+        <label for="result">Valeur lue</label>
+        <textarea id="result" placeholder="Le contenu détecté apparaîtra ici..."></textarea>
+      </div>
+
+      <div class="section">
+        <h2 class="section-title">Saisie manuelle</h2>
+        <label for="manualCode">Numero / code a saisir si le scan ne fonctionne pas</label>
+        <input id="manualCode" type="text" placeholder="Ex. 123456789">
+        <div class="actions" style="margin-top: 12px;">
+          <button id="manualSendBtn" class="primary" type="button" disabled>Envoyer la saisie manuelle</button>
+        </div>
+      </div>
+
+      <div id="status" class="status">En attente d'un scan.</div>
+      <p class="hint">Pour la caméra sur téléphone, ouvre cette page en HTTPS ou via un serveur local.</p>
+    </section>
+  </main>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYXQgFNtpXxP_SXfNj6BwYxhwNyBi-5CEW-IKJ1GDgeeuLfv7Fv0nL51l_Gnef30Kn/exec";
+    let qrCodeScanner = null;
+    let cameraRunning = false;
+
+    const readerId = "reader";
+    const locationField = document.getElementById("location");
+    const chariotWrap = document.getElementById("chariotWrap");
+    const chariotNumberField = document.getElementById("chariotNumber");
+    const logWrap = document.getElementById("logWrap");
+    const logTypeField = document.getElementById("logType");
+    const otherWrap = document.getElementById("otherWrap");
+    const otherLocationField = document.getElementById("otherLocation");
+    const subfields = document.getElementById("subfields");
+    const resultField = document.getElementById("result");
+    const restartBtn = document.getElementById("restartBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const sendBtn = document.getElementById("sendBtn");
+    const manualCodeField = document.getElementById("manualCode");
+    const manualSendBtn = document.getElementById("manualSendBtn");
+    const statusBox = document.getElementById("status");
+
+    function getResolvedLocation() {
+      const baseLocation = locationField.value.trim();
+
+      if (!baseLocation) return "";
+      if (baseLocation === "CHARIOT") {
+        return chariotNumberField.value ? `CHARIOT ${chariotNumberField.value}` : "";
+      }
+      if (baseLocation === "LOG") {
+        return logTypeField.value ? `LOG ${logTypeField.value}` : "";
+      }
+      if (baseLocation === "AUTRE") {
+        return otherLocationField.value.trim();
+      }
+
+      return baseLocation;
+    }
+
+    function updateLocationFields() {
+      const baseLocation = locationField.value;
+      const showChariot = baseLocation === "CHARIOT";
+      const showLog = baseLocation === "LOG";
+      const showOther = baseLocation === "AUTRE";
+
+      subfields.classList.toggle("hidden", !showChariot && !showLog && !showOther);
+      chariotWrap.classList.toggle("hidden", !showChariot);
+      logWrap.classList.toggle("hidden", !showLog);
+      otherWrap.classList.toggle("hidden", !showOther);
+
+      if (!showChariot) chariotNumberField.value = "";
+      if (!showLog) logTypeField.value = "";
+      if (!showOther) otherLocationField.value = "";
+    }
+
+    function setStatus(message, type = "") {
+      statusBox.textContent = message;
+      statusBox.className = "status";
+      if (type) {
+        statusBox.classList.add(type);
+      }
+    }
+
+    function setControls() {
+      const resolvedLocation = getResolvedLocation();
+      const canUseLocation = Boolean(resolvedLocation);
+
+      restartBtn.disabled = cameraRunning || !canUseLocation;
+      stopBtn.disabled = !cameraRunning;
+      sendBtn.disabled = !canUseLocation || !resultField.value.trim();
+      manualSendBtn.disabled = !canUseLocation || !manualCodeField.value.trim();
+    }
+
+    async function startCamera() {
+      if (cameraRunning) return;
+
+      if (!getResolvedLocation()) {
+        setStatus("Choisis d'abord un emplacement avant d'ouvrir la caméra.", "error");
+        setControls();
+        return;
+      }
+
+      setStatus("Ouverture de la caméra...", "");
+
+      try {
+        qrCodeScanner = new Html5Qrcode(readerId);
+        await qrCodeScanner.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: (viewfinderWidth, viewfinderHeight) => {
+              const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+              const size = Math.max(180, Math.floor(minEdge * 0.7));
+              return { width: size, height: size };
+            }
+          },
+          async (decodedText) => {
+            resultField.value = decodedText;
+            setStatus("QR code détecté. Envoi vers Google Sheets en cours...", "");
+            await stopCamera();
+            await sendToGoogleSheets(decodedText);
+            setControls();
+          },
+          () => {}
+        );
+
+        cameraRunning = true;
+        setStatus("Caméra active. Place le QR code devant l'objectif.", "");
+        setControls();
+      } catch (error) {
+        setStatus("Impossible d'ouvrir la caméra : " + error.message, "error");
+        cameraRunning = false;
+        setControls();
+      }
+    }
+
+    async function stopCamera() {
+      if (!qrCodeScanner || !cameraRunning) {
+        cameraRunning = false;
+        setControls();
+        return;
+      }
+
+      try {
+        await qrCodeScanner.stop();
+        await qrCodeScanner.clear();
+      } catch (error) {
+        setStatus("La caméra a rencontré un souci à l'arrêt : " + error.message, "error");
+      } finally {
+        qrCodeScanner = null;
+        cameraRunning = false;
+        setControls();
+      }
+    }
+
+    async function sendToGoogleSheets(scannedValue = resultField.value.trim()) {
+      const location = getResolvedLocation();
+      const qrValue = scannedValue.trim();
+
+      if (!location) {
+        setStatus("Choisis un emplacement avant l'envoi.", "error");
+        return;
+      }
+
+      if (!qrValue) {
+        setStatus("Aucune donnée QR à envoyer pour l'instant.", "error");
+        return;
+      }
+
+      sendBtn.disabled = true;
+      setStatus("Envoi des données vers Google Sheets...", "");
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify({
+            location,
+            qrData: qrValue
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || "La requête Google Sheets a échoué.");
+        }
+
+        setStatus("Donnée envoyée avec succès vers Google Sheets.", "ok");
+      } catch (error) {
+        setStatus("Échec de l'envoi : " + error.message, "error");
+      } finally {
+        setControls();
+      }
+    }
+
+    async function maybeAutoStartCamera() {
+      if (!getResolvedLocation() || cameraRunning) {
+        setControls();
+        return;
+      }
+
+      await startCamera();
+    }
+
+    async function restartCamera() {
+      resultField.value = "";
+      manualCodeField.value = "";
+      setControls();
+      await startCamera();
+    }
+
+    async function sendManualCode() {
+      const manualValue = manualCodeField.value.trim();
+
+      if (!manualValue) {
+        setStatus("Saisis un numero avant l'envoi manuel.", "error");
+        return;
+      }
+
+      resultField.value = manualValue;
+      await sendToGoogleSheets(manualValue);
+    }
+
+    restartBtn.addEventListener("click", restartCamera);
+    stopBtn.addEventListener("click", stopCamera);
+    sendBtn.addEventListener("click", sendToGoogleSheets);
+    manualSendBtn.addEventListener("click", sendManualCode);
+    locationField.addEventListener("change", async () => {
+      updateLocationFields();
+      await maybeAutoStartCamera();
+    });
+    chariotNumberField.addEventListener("change", maybeAutoStartCamera);
+    logTypeField.addEventListener("change", maybeAutoStartCamera);
+    otherLocationField.addEventListener("input", async () => {
+      setControls();
+      if (otherLocationField.value.trim()) {
+        await maybeAutoStartCamera();
+      }
+    });
+    resultField.addEventListener("input", setControls);
+    manualCodeField.addEventListener("input", setControls);
+
+    updateLocationFields();
+    setControls();
+  </script>
+</body>
+</html>

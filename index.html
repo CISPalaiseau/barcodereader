@@ -167,15 +167,47 @@
     }
 
     .camera {
+      position: relative;
       overflow: hidden;
       border-radius: 12px;
       border: 1px solid var(--border);
       background: #0b0d12;
       min-height: 360px;
+      touch-action: manipulation;
     }
 
     #reader {
       width: 100%;
+    }
+
+    .camera-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .camera-note {
+      margin-top: 10px;
+    }
+
+    .camera-focus-ring {
+      position: absolute;
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      border: 2px solid rgba(243, 244, 246, 0.9);
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.001);
+      transform: translate(-50%, -50%) scale(0.9);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+      z-index: 3;
+    }
+
+    .camera-focus-ring.visible {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
     }
 
     .status {
@@ -304,7 +336,14 @@
         <h2 class="section-title">Caméra</h2>
         <div class="camera">
           <div id="reader"></div>
+          <div id="focusRing" class="camera-focus-ring hidden" aria-hidden="true"></div>
         </div>
+        <div class="camera-toolbar">
+          <button id="torchBtn" class="secondary" type="button" disabled>Flash indisponible</button>
+        </div>
+        <p id="cameraNote" class="hint camera-note">
+          Astuce : touche l'image pour tenter une mise au point locale. Les codes-barres horizontaux sont mieux détectés avec un cadrage large.
+        </p>
       </div>
 
       <div class="section">
@@ -337,8 +376,25 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYXQgFNtpXxP_SXfNj6BwYxhwNyBi-5CEW-IKJ1GDgeeuLfv7Fv0nL51l_Gnef30Kn/exec";
+    const SCAN_FORMATS = window.Html5QrcodeSupportedFormats ? [
+      Html5QrcodeSupportedFormats.QR_CODE,
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.CODE_39,
+      Html5QrcodeSupportedFormats.CODE_93,
+      Html5QrcodeSupportedFormats.CODABAR,
+      Html5QrcodeSupportedFormats.ITF,
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.UPC_A,
+      Html5QrcodeSupportedFormats.UPC_E,
+      Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
+      Html5QrcodeSupportedFormats.PDF_417,
+      Html5QrcodeSupportedFormats.DATA_MATRIX
+    ].filter((format) => typeof format === "number") : undefined;
     let qrCodeScanner = null;
     let cameraRunning = false;
+    let torchSupported = false;
+    let torchEnabled = false;
 
     const readerId = "reader";
     const locationField = document.getElementById("location");
@@ -353,9 +409,164 @@
     const restartBtn = document.getElementById("restartBtn");
     const stopBtn = document.getElementById("stopBtn");
     const sendBtn = document.getElementById("sendBtn");
+    const torchBtn = document.getElementById("torchBtn");
     const manualCodeField = document.getElementById("manualCode");
     const manualSendBtn = document.getElementById("manualSendBtn");
     const statusBox = document.getElementById("status");
+    const cameraNote = document.getElementById("cameraNote");
+    const focusRing = document.getElementById("focusRing");
+
+    function getReaderVideo() {
+      return document.querySelector(`#${readerId} video`);
+    }
+
+    function getScanBox(viewfinderWidth, viewfinderHeight) {
+      const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+      const isLandscape = viewfinderWidth > viewfinderHeight;
+
+      if (isLandscape) {
+        return {
+          width: Math.max(260, Math.floor(viewfinderWidth * 0.82)),
+          height: Math.max(120, Math.floor(minEdge * 0.36))
+        };
+      }
+
+      return {
+        width: Math.max(220, Math.floor(viewfinderWidth * 0.88)),
+        height: Math.max(110, Math.floor(minEdge * 0.30))
+      };
+    }
+
+    function resetTorchState() {
+      torchSupported = false;
+      torchEnabled = false;
+    }
+
+    function updateTorchButton() {
+      if (!cameraRunning) {
+        torchBtn.disabled = true;
+        torchBtn.textContent = "Flash indisponible";
+        return;
+      }
+
+      if (!torchSupported) {
+        torchBtn.disabled = true;
+        torchBtn.textContent = "Flash non pris en charge";
+        return;
+      }
+
+      torchBtn.disabled = false;
+      torchBtn.textContent = torchEnabled ? "Couper le flash" : "Activer le flash";
+    }
+
+    async function detectTorchAvailability() {
+      if (!qrCodeScanner || !cameraRunning || typeof qrCodeScanner.getRunningTrackCapabilities !== "function") {
+        resetTorchState();
+        updateTorchButton();
+        return;
+      }
+
+      try {
+        const capabilities = qrCodeScanner.getRunningTrackCapabilities();
+        torchSupported = Boolean(capabilities && capabilities.torch);
+      } catch (error) {
+        torchSupported = false;
+      }
+
+      updateTorchButton();
+    }
+
+    async function setTorch(enabled) {
+      if (!cameraRunning || !qrCodeScanner || !torchSupported || typeof qrCodeScanner.applyVideoConstraints !== "function") {
+        return;
+      }
+
+      await qrCodeScanner.applyVideoConstraints({
+        advanced: [{ torch: enabled }]
+      });
+
+      torchEnabled = enabled;
+      updateTorchButton();
+    }
+
+    async function toggleTorch() {
+      if (!torchSupported) return;
+
+      try {
+        await setTorch(!torchEnabled);
+        setStatus(torchEnabled ? "Flash activé." : "Flash désactivé.", "");
+      } catch (error) {
+        setStatus("Impossible de changer l'état du flash : " + error.message, "error");
+      }
+    }
+
+    function showFocusRing(clientX, clientY) {
+      const cameraBox = document.querySelector(".camera");
+      if (!cameraBox) return;
+
+      const rect = cameraBox.getBoundingClientRect();
+      const left = Math.min(Math.max(clientX - rect.left, 42), rect.width - 42);
+      const top = Math.min(Math.max(clientY - rect.top, 42), rect.height - 42);
+
+      focusRing.style.left = `${left}px`;
+      focusRing.style.top = `${top}px`;
+      focusRing.classList.remove("hidden");
+      focusRing.classList.add("visible");
+
+      window.clearTimeout(showFocusRing.timeoutId);
+      showFocusRing.timeoutId = window.setTimeout(() => {
+        focusRing.classList.remove("visible");
+        focusRing.classList.add("hidden");
+      }, 700);
+    }
+
+    async function focusCameraAtPoint(event) {
+      if (!cameraRunning || !qrCodeScanner) return;
+
+      const touch = (event.changedTouches && event.changedTouches[0]) || (event.touches && event.touches[0]);
+      const clientX = touch ? touch.clientX : event.clientX;
+      const clientY = touch ? touch.clientY : event.clientY;
+
+      if (typeof clientX !== "number" || typeof clientY !== "number") {
+        return;
+      }
+
+      showFocusRing(clientX, clientY);
+
+      if (typeof qrCodeScanner.getRunningTrackCapabilities !== "function" || typeof qrCodeScanner.applyVideoConstraints !== "function") {
+        return;
+      }
+
+      const video = getReaderVideo();
+      if (!video) return;
+
+      const rect = video.getBoundingClientRect();
+      const x = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
+      const y = Math.min(Math.max((clientY - rect.top) / rect.height, 0), 1);
+
+      try {
+        const capabilities = qrCodeScanner.getRunningTrackCapabilities() || {};
+        const advanced = [];
+
+        if (Array.isArray(capabilities.focusMode) && capabilities.focusMode.includes("continuous")) {
+          advanced.push({ focusMode: "continuous" });
+        }
+
+        if (capabilities.pointsOfInterest) {
+          advanced.push({ pointsOfInterest: [{ x, y }] });
+        }
+
+        if (!advanced.length) {
+          cameraNote.textContent = "La caméra est active, mais cet appareil ne permet pas la mise au point tactile depuis le navigateur.";
+          return;
+        }
+
+        await qrCodeScanner.applyVideoConstraints({ advanced });
+        cameraNote.textContent = "Mise au point demandée sur la zone touchée.";
+      } catch (error) {
+        cameraNote.textContent = "La mise au point tactile n'est pas disponible sur cet appareil.";
+      }
+    }
 
     function getResolvedLocation() {
       const baseLocation = locationField.value.trim();
@@ -406,6 +617,7 @@
       stopBtn.disabled = !cameraRunning;
       sendBtn.disabled = !canUseLocation || !resultField.value.trim();
       manualSendBtn.disabled = !canUseLocation || !manualCodeField.value.trim();
+      updateTorchButton();
     }
 
     async function startCamera() {
@@ -420,20 +632,21 @@
       setStatus("Ouverture de la caméra...", "");
 
       try {
-        qrCodeScanner = new Html5Qrcode(readerId);
+        resetTorchState();
+        qrCodeScanner = new Html5Qrcode(readerId, SCAN_FORMATS ? { formatsToSupport: SCAN_FORMATS } : undefined);
         await qrCodeScanner.start(
-          { facingMode: "environment" },
           {
-            fps: 10,
-            qrbox: (viewfinderWidth, viewfinderHeight) => {
-              const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-              const size = Math.max(180, Math.floor(minEdge * 0.7));
-              return { width: size, height: size };
-            }
+            facingMode: { ideal: "environment" }
+          },
+          {
+            fps: 12,
+            aspectRatio: 1.7777778,
+            qrbox: getScanBox,
+            disableFlip: false
           },
           async (decodedText) => {
             resultField.value = decodedText;
-            setStatus("QR code détecté. Envoi vers Google Sheets en cours...", "");
+            setStatus("Code détecté. Envoi vers Google Sheets en cours...", "");
             await stopCamera();
             await sendToGoogleSheets(decodedText);
             setControls();
@@ -442,10 +655,13 @@
         );
 
         cameraRunning = true;
-        setStatus("Caméra active. Place le QR code devant l'objectif.", "");
+        cameraNote.textContent = "Astuce : touche l'image pour tenter une mise au point locale. Les codes-barres horizontaux sont mieux détectés avec un cadrage large.";
+        await detectTorchAvailability();
+        setStatus("Caméra active. Place le code-barres ou le QR code devant l'objectif.", "");
         setControls();
       } catch (error) {
         setStatus("Impossible d'ouvrir la caméra : " + error.message, "error");
+        resetTorchState();
         cameraRunning = false;
         setControls();
       }
@@ -453,17 +669,22 @@
 
     async function stopCamera() {
       if (!qrCodeScanner || !cameraRunning) {
+        resetTorchState();
         cameraRunning = false;
         setControls();
         return;
       }
 
       try {
+        if (torchSupported && torchEnabled) {
+          await setTorch(false);
+        }
         await qrCodeScanner.stop();
         await qrCodeScanner.clear();
       } catch (error) {
         setStatus("La caméra a rencontré un souci à l'arrêt : " + error.message, "error");
       } finally {
+        resetTorchState();
         qrCodeScanner = null;
         cameraRunning = false;
         setControls();
@@ -544,7 +765,10 @@
     restartBtn.addEventListener("click", restartCamera);
     stopBtn.addEventListener("click", stopCamera);
     sendBtn.addEventListener("click", sendToGoogleSheets);
+    torchBtn.addEventListener("click", toggleTorch);
     manualSendBtn.addEventListener("click", sendManualCode);
+    document.querySelector(".camera").addEventListener("click", focusCameraAtPoint);
+    document.querySelector(".camera").addEventListener("touchend", focusCameraAtPoint, { passive: true });
     locationField.addEventListener("change", async () => {
       updateLocationFields();
       await maybeAutoStartCamera();

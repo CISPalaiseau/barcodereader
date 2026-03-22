@@ -294,6 +294,18 @@
               <option value="AUTRE">AUTRE</option>
             </select>
           </div>
+
+          <div style="grid-column: 1 / -1;">
+            <label for="barcodeType">Type de code-barres</label>
+            <select id="barcodeType">
+              <option value="AUTO">Auto</option>
+              <option value="CODE_128">Code 128</option>
+              <option value="EAN_UPC">EAN / UPC</option>
+              <option value="CODE_39_ITF">Code 39 / ITF</option>
+              <option value="PDF_417">PDF417</option>
+              <option value="DATA_MATRIX">Data Matrix</option>
+            </select>
+          </div>
         </div>
 
         <div id="subfields" class="subfields hidden" style="margin-top: 16px;">
@@ -358,6 +370,7 @@
           <h2 class="section-title">Dernier code-barres</h2>
         <label for="result">Valeur lue</label>
         <textarea id="result" placeholder="Le code-barres détecté apparaîtra ici..."></textarea>
+        <p id="detectedType" class="hint camera-note">Type détecté : en attente</p>
       </div>
 
       <div class="section">
@@ -366,6 +379,15 @@
         <input id="manualCode" type="text" placeholder="Ex. 123456789">
         <div class="actions" style="margin-top: 12px;">
           <button id="manualSendBtn" class="primary" type="button" disabled>Envoyer la saisie manuelle</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2 class="section-title">Analyser une image</h2>
+        <label for="imageFile">Importer une photo du code-barres</label>
+        <input id="imageFile" type="file" accept="image/*">
+        <div class="actions" style="margin-top: 12px;">
+          <button id="imageScanBtn" class="secondary" type="button" disabled>Analyser l'image</button>
         </div>
       </div>
 
@@ -385,6 +407,8 @@
     let zoomLevel = 1;
     let zoomRange = { min: 1, max: 1, step: 0.5 };
     let lastCameraTapAt = 0;
+    const isLikelyIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
+      || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
     const readerId = "reader";
     const locationField = document.getElementById("location");
@@ -395,6 +419,7 @@
     const otherWrap = document.getElementById("otherWrap");
     const otherLocationField = document.getElementById("otherLocation");
     const subfields = document.getElementById("subfields");
+    const barcodeTypeField = document.getElementById("barcodeType");
     const resultField = document.getElementById("result");
     const restartBtn = document.getElementById("restartBtn");
     const stopBtn = document.getElementById("stopBtn");
@@ -402,9 +427,12 @@
     const torchBtn = document.getElementById("torchBtn");
     const manualCodeField = document.getElementById("manualCode");
     const manualSendBtn = document.getElementById("manualSendBtn");
+    const imageFileField = document.getElementById("imageFile");
+    const imageScanBtn = document.getElementById("imageScanBtn");
     const statusBox = document.getElementById("status");
     const cameraNote = document.getElementById("cameraNote");
     const focusRing = document.getElementById("focusRing");
+    const detectedType = document.getElementById("detectedType");
 
     function getReaderVideo() {
       return document.querySelector(`#${readerId} video`);
@@ -415,21 +443,62 @@
         return undefined;
       }
 
-      return [
-        Html5QrcodeSupportedFormats.QR_CODE,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.CODE_39,
-        Html5QrcodeSupportedFormats.CODE_93,
-        Html5QrcodeSupportedFormats.CODABAR,
-        Html5QrcodeSupportedFormats.ITF,
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-        Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
-        Html5QrcodeSupportedFormats.PDF_417,
-        Html5QrcodeSupportedFormats.DATA_MATRIX
-      ].filter((format) => typeof format === "number");
+      const selectedType = barcodeTypeField.value;
+      const formatGroups = {
+        AUTO: [
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.CODE_93,
+          Html5QrcodeSupportedFormats.CODABAR,
+          Html5QrcodeSupportedFormats.ITF,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
+          Html5QrcodeSupportedFormats.PDF_417,
+          Html5QrcodeSupportedFormats.DATA_MATRIX
+        ],
+        CODE_128: [
+          Html5QrcodeSupportedFormats.CODE_128
+        ],
+        EAN_UPC: [
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION
+        ],
+        CODE_39_ITF: [
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.CODE_93,
+          Html5QrcodeSupportedFormats.CODABAR,
+          Html5QrcodeSupportedFormats.ITF
+        ],
+        PDF_417: [
+          Html5QrcodeSupportedFormats.PDF_417
+        ],
+        DATA_MATRIX: [
+          Html5QrcodeSupportedFormats.DATA_MATRIX
+        ]
+      };
+
+      return (formatGroups[selectedType] || formatGroups.AUTO)
+        .filter((format) => typeof format === "number");
+    }
+
+    function getDetectedFormatLabel(decodedResult) {
+      const candidates = [
+        decodedResult && decodedResult.result && decodedResult.result.format && decodedResult.result.format.formatName,
+        decodedResult && decodedResult.result && decodedResult.result.format && decodedResult.result.format.name,
+        decodedResult && decodedResult.result && decodedResult.result.format,
+        decodedResult && decodedResult.format && decodedResult.format.formatName,
+        decodedResult && decodedResult.format && decodedResult.format.name,
+        decodedResult && decodedResult.format
+      ];
+
+      const detected = candidates.find((value) => typeof value === "string" && value.trim());
+      return detected ? detected.replace(/_/g, " ") : "Inconnu";
     }
 
     function getScannerInstance() {
@@ -483,6 +552,12 @@
     }
 
     async function detectTorchAvailability() {
+      if (isLikelyIOS) {
+        torchSupported = false;
+        updateTorchButton();
+        return;
+      }
+
       if (!qrCodeScanner || !cameraRunning || typeof qrCodeScanner.getRunningTrackCapabilities !== "function") {
         resetTorchState();
         updateTorchButton();
@@ -500,6 +575,11 @@
     }
 
     async function detectZoomAvailability() {
+      if (isLikelyIOS) {
+        zoomSupported = false;
+        return;
+      }
+
       if (!qrCodeScanner || !cameraRunning || typeof qrCodeScanner.getRunningTrackCapabilities !== "function") {
         zoomSupported = false;
         return;
@@ -532,8 +612,9 @@
       await qrCodeScanner.start(
         cameraConfig,
         scanConfig,
-        async (decodedText) => {
+        async (decodedText, decodedResult) => {
           resultField.value = decodedText;
+          detectedType.textContent = `Type détecté : ${getDetectedFormatLabel(decodedResult)}`;
           setStatus("Code-barres détecté. Envoi vers Google Sheets en cours...", "");
           await stopCamera();
           await sendToGoogleSheets(decodedText);
@@ -544,6 +625,10 @@
     }
 
     async function setTorch(enabled) {
+      if (isLikelyIOS) {
+        return;
+      }
+
       if (!cameraRunning || !qrCodeScanner || !torchSupported || typeof qrCodeScanner.applyVideoConstraints !== "function") {
         return;
       }
@@ -557,6 +642,10 @@
     }
 
     async function applyZoom(level) {
+      if (isLikelyIOS) {
+        return false;
+      }
+
       if (!cameraRunning || !qrCodeScanner || !zoomSupported || typeof qrCodeScanner.applyVideoConstraints !== "function") {
         return false;
       }
@@ -638,6 +727,11 @@
       }
 
       showFocusRing(clientX, clientY);
+
+      if (isLikelyIOS) {
+        cameraNote.textContent = "Sur iPhone, la mise au point tactile et le zoom navigateur sont désactivés pour garder la caméra stable.";
+        return;
+      }
 
       if (typeof qrCodeScanner.getRunningTrackCapabilities !== "function" || typeof qrCodeScanner.applyVideoConstraints !== "function") {
         return;
@@ -731,11 +825,13 @@
     function setControls() {
       const resolvedLocation = getResolvedLocation();
       const canUseLocation = Boolean(resolvedLocation);
+      const hasImageFile = Boolean(imageFileField.files && imageFileField.files[0]);
 
       restartBtn.disabled = cameraRunning || !canUseLocation;
       stopBtn.disabled = !cameraRunning;
       sendBtn.disabled = !canUseLocation || !resultField.value.trim();
       manualSendBtn.disabled = !canUseLocation || !manualCodeField.value.trim();
+      imageScanBtn.disabled = !canUseLocation || !hasImageFile;
       updateTorchButton();
     }
 
@@ -811,7 +907,9 @@
         }
 
         cameraRunning = true;
-        cameraNote.textContent = "Astuce : touche l'image pour tenter une mise au point locale et double tape pour zoomer si l'appareil le permet.";
+        cameraNote.textContent = isLikelyIOS
+          ? "Sur iPhone, le scan reste volontairement simple pour garder une caméra stable."
+          : "Astuce : touche l'image pour tenter une mise au point locale et double tape pour zoomer si l'appareil le permet.";
         await detectTorchAvailability();
         await detectZoomAvailability();
         setStatus("Caméra active. Place le code-barres devant l'objectif.", "");
@@ -904,6 +1002,7 @@
     async function restartCamera() {
       resultField.value = "";
       manualCodeField.value = "";
+      detectedType.textContent = "Type détecté : en attente";
       setControls();
       await startCamera();
     }
@@ -917,7 +1016,52 @@
       }
 
       resultField.value = manualValue;
+      detectedType.textContent = "Type détecté : saisie manuelle";
       await sendToGoogleSheets(manualValue);
+    }
+
+    async function analyzeImageFile() {
+      const imageFile = imageFileField.files && imageFileField.files[0];
+
+      if (!getResolvedLocation()) {
+        setStatus("Choisis un emplacement avant d'analyser une image.", "error");
+        setControls();
+        return;
+      }
+
+      if (!imageFile) {
+        setStatus("Choisis une image avant de lancer l'analyse.", "error");
+        setControls();
+        return;
+      }
+
+      setStatus("Analyse de l'image en cours...", "");
+
+      try {
+        if (cameraRunning) {
+          await stopCamera();
+        }
+
+        const imageScanner = getScannerInstance();
+        const scanResult = await imageScanner.scanFile(imageFile, false);
+        const decodedText = typeof scanResult === "string"
+          ? scanResult
+          : (scanResult && scanResult.decodedText) || "";
+
+        resultField.value = decodedText;
+        detectedType.textContent = `Type détecté : ${getDetectedFormatLabel(scanResult)}`;
+        setStatus("Code-barres détecté dans l'image. Envoi vers Google Sheets en cours...", "");
+        await sendToGoogleSheets(decodedText);
+
+        try {
+          await imageScanner.clear();
+        } catch (clearError) {}
+      } catch (error) {
+        detectedType.textContent = "Type détecté : en attente";
+        setStatus("Impossible d'analyser l'image : " + error.message, "error");
+      } finally {
+        setControls();
+      }
     }
 
     function bindUi() {
@@ -929,10 +1073,20 @@
       sendBtn.addEventListener("click", sendToGoogleSheets);
       torchBtn.addEventListener("click", toggleTorch);
       manualSendBtn.addEventListener("click", sendManualCode);
+      imageScanBtn.addEventListener("click", analyzeImageFile);
       document.querySelector(".camera").addEventListener("click", handleCameraTap);
       document.querySelector(".camera").addEventListener("touchend", handleCameraTap, { passive: true });
       locationField.addEventListener("change", async () => {
         updateLocationFields();
+        await maybeAutoStartCamera();
+      });
+      barcodeTypeField.addEventListener("change", async () => {
+        detectedType.textContent = "Type détecté : en attente";
+        if (cameraRunning) {
+          await stopCamera();
+          await startCamera();
+          return;
+        }
         await maybeAutoStartCamera();
       });
       chariotNumberField.addEventListener("change", maybeAutoStartCamera);
@@ -945,6 +1099,7 @@
       });
       resultField.addEventListener("input", setControls);
       manualCodeField.addEventListener("input", setControls);
+      imageFileField.addEventListener("change", setControls);
 
       updateLocationFields();
       setControls();

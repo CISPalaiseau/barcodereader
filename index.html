@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lecteur de codes-barres vers Google Sheets</title>
+  <title>Lecteur Code 128 vers Google Sheets</title>
   <script src="https://unpkg.com/html5-qrcode" defer></script>
   <style>
     :root {
@@ -269,9 +269,9 @@
 </head>
 <body>
   <main class="app">
-    <h1>Scanner un code-barres</h1>
+    <h1>Scanner un code-barres Code 128</h1>
     <p class="intro">
-      Choisis un emplacement, la caméra s'ouvre automatiquement, puis le code-barres est envoyé dans Google Sheets. Si besoin, tu peux aussi saisir le numéro manuellement.
+      Choisis un emplacement, la caméra s'ouvre automatiquement, puis le code-barres Code 128 est envoyé dans Google Sheets. Si besoin, tu peux aussi saisir le numéro manuellement.
     </p>
 
     <section class="grid">
@@ -298,8 +298,8 @@
           <div style="grid-column: 1 / -1;">
             <label for="barcodeType">Type de code-barres</label>
             <select id="barcodeType">
+              <option value="CODE_128" selected>Code 128</option>
               <option value="AUTO">Auto</option>
-              <option value="CODE_128">Code 128</option>
               <option value="EAN_UPC">EAN / UPC</option>
               <option value="CODE_39_ITF">Code 39 / ITF</option>
               <option value="PDF_417">PDF417</option>

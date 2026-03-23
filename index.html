@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lecteur Code 128 vers Google Sheets</title>
   <script src="https://unpkg.com/html5-qrcode" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.9.15/dist/index.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@undecaf/barcode-detector-polyfill@0.9.23/dist/index.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
   <style>
     :root {
       --bg: #0f1115;
@@ -216,6 +219,28 @@
       transform: translate(-50%, -50%) scale(1);
     }
 
+    .camera-live-text {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 4;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(15, 17, 21, 0.82);
+      border: 1px solid rgba(243, 244, 246, 0.16);
+      color: var(--ink);
+      font-size: 0.95rem;
+      line-height: 1.35;
+      backdrop-filter: blur(6px);
+      pointer-events: none;
+    }
+
+    .camera-live-text strong {
+      color: #d4d4d8;
+      font-weight: 600;
+    }
+
     .status {
       padding: 14px 16px;
       border-radius: 10px;
@@ -344,6 +369,7 @@
         <div class="camera">
           <div id="reader"></div>
           <div id="focusRing" class="camera-focus-ring hidden" aria-hidden="true"></div>
+          <div id="liveDetectedText" class="camera-live-text hidden" aria-live="polite"></div>
         </div>
         <div class="camera-toolbar">
           <button id="torchBtn" class="secondary" type="button" disabled>Flash indisponible</button>
@@ -377,15 +403,6 @@
         </div>
       </div>
 
-      <div class="section">
-        <h2 class="section-title">Analyser une image</h2>
-        <label for="imageFile">Importer une photo du code-barres</label>
-        <input id="imageFile" type="file" accept="image/*">
-        <div class="actions" style="margin-top: 12px;">
-          <button id="imageScanBtn" class="secondary" type="button" disabled>Analyser l'image</button>
-        </div>
-      </div>
-
       <div id="status" class="status">En attente d'un scan.</div>
       <p class="hint">Pour la caméra sur téléphone, ouvre cette page en HTTPS ou via un serveur local.</p>
     </section>
@@ -393,15 +410,33 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYXQgFNtpXxP_SXfNj6BwYxhwNyBi-5CEW-IKJ1GDgeeuLfv7Fv0nL51l_Gnef30Kn/exec";
+    const IOS_FALLBACK_SCANNER_MODULE_URL = "https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.11.0/dist/inlined/main.mjs";
+    const OCR_CHAR_WHITELIST = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -";
     let qrCodeScanner = null;
     let cameraRunning = false;
     let torchSupported = false;
     let torchEnabled = false;
     let scannerLibraryReady = false;
+    let cameraStarting = false;
+    let cameraStopping = false;
+    let sendInFlight = false;
     let zoomSupported = false;
     let zoomLevel = 1;
     let zoomRange = { min: 1, max: 1, step: 0.5 };
     let lastCameraTapAt = 0;
+    let hasHandledScan = false;
+    let iosFallbackScannerModulePromise = null;
+    let iosFallbackLoopActive = false;
+    let iosFallbackLoopTimer = null;
+    let iosFallbackCanvas = null;
+    let iosFallbackContext = null;
+    let ocrCanvas = null;
+    let ocrContext = null;
+    let ocrWorkerPromise = null;
+    let ocrInFlight = false;
+    let lastOcrAttemptAt = 0;
+    let barcodeDetectorReady = false;
+    let code128Detector = null;
     const isLikelyIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
       || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
@@ -421,15 +456,484 @@
     const torchBtn = document.getElementById("torchBtn");
     const manualCodeField = document.getElementById("manualCode");
     const manualSendBtn = document.getElementById("manualSendBtn");
-    const imageFileField = document.getElementById("imageFile");
-    const imageScanBtn = document.getElementById("imageScanBtn");
     const statusBox = document.getElementById("status");
     const cameraNote = document.getElementById("cameraNote");
     const focusRing = document.getElementById("focusRing");
     const detectedType = document.getElementById("detectedType");
+    const liveDetectedText = document.getElementById("liveDetectedText");
 
     function getReaderVideo() {
       return document.querySelector(`#${readerId} video`);
+    }
+
+    function setLiveDetectedText(value = "", label = "Texte détecté") {
+      const cleanValue = String(value || "").trim();
+
+      if (!liveDetectedText) {
+        return;
+      }
+
+      if (!cleanValue) {
+        liveDetectedText.textContent = "";
+        liveDetectedText.classList.add("hidden");
+        return;
+      }
+
+      liveDetectedText.innerHTML = `<strong>${label} :</strong> ${cleanValue}`;
+      liveDetectedText.classList.remove("hidden");
+    }
+
+    function installBarcodeDetectorPolyfill() {
+      if (barcodeDetectorReady) {
+        return;
+      }
+
+      try {
+        window.BarcodeDetector.getSupportedFormats();
+        barcodeDetectorReady = true;
+        return;
+      } catch (error) {}
+
+      if (window.barcodeDetectorPolyfill && window.barcodeDetectorPolyfill.BarcodeDetectorPolyfill) {
+        window.BarcodeDetector = window.barcodeDetectorPolyfill.BarcodeDetectorPolyfill;
+        barcodeDetectorReady = true;
+      }
+    }
+
+    async function getCode128BarcodeDetector() {
+      installBarcodeDetectorPolyfill();
+
+      if (!window.BarcodeDetector || typeof window.BarcodeDetector !== "function") {
+        return null;
+      }
+
+      if (!code128Detector) {
+        try {
+          code128Detector = new window.BarcodeDetector({ formats: ["code_128"] });
+        } catch (error) {
+          code128Detector = null;
+        }
+      }
+
+      return code128Detector;
+    }
+
+    function extractCode128FromDetections(detections) {
+      if (!Array.isArray(detections) || !detections.length) {
+        return "";
+      }
+
+      const detection = detections.find((item) => {
+        const format = String((item && item.format) || "").toLowerCase();
+        return format === "code_128";
+      }) || detections[0];
+
+      return String((detection && detection.rawValue) || "").trim();
+    }
+
+    async function decodeCode128WithBarcodeDetector(source) {
+      const detector = await getCode128BarcodeDetector();
+      if (!detector || typeof detector.detect !== "function") {
+        return "";
+      }
+
+      try {
+        const detections = await detector.detect(source);
+        return extractCode128FromDetections(detections);
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function clearIosFallbackLoop() {
+      iosFallbackLoopActive = false;
+      if (iosFallbackLoopTimer) {
+        window.clearTimeout(iosFallbackLoopTimer);
+        iosFallbackLoopTimer = null;
+      }
+    }
+
+    function getIosFallbackCanvasContext(width, height) {
+      if (!iosFallbackCanvas) {
+        iosFallbackCanvas = document.createElement("canvas");
+        iosFallbackContext = iosFallbackCanvas.getContext("2d", { willReadFrequently: true });
+      }
+
+      if (iosFallbackCanvas.width !== width || iosFallbackCanvas.height !== height) {
+        iosFallbackCanvas.width = width;
+        iosFallbackCanvas.height = height;
+      }
+
+      return iosFallbackContext;
+    }
+
+    function getOcrCanvasContext(width, height) {
+      if (!ocrCanvas) {
+        ocrCanvas = document.createElement("canvas");
+        ocrContext = ocrCanvas.getContext("2d", { willReadFrequently: true });
+      }
+
+      if (ocrCanvas.width !== width || ocrCanvas.height !== height) {
+        ocrCanvas.width = width;
+        ocrCanvas.height = height;
+      }
+
+      return ocrContext;
+    }
+
+    async function loadOcrWorker() {
+      if (!window.Tesseract || typeof window.Tesseract.createWorker !== "function") {
+        return null;
+      }
+
+      if (!ocrWorkerPromise) {
+        ocrWorkerPromise = (async () => {
+          const worker = await window.Tesseract.createWorker("eng");
+          if (typeof worker.setParameters === "function") {
+            await worker.setParameters({
+              tessedit_char_whitelist: OCR_CHAR_WHITELIST,
+              tessedit_pageseg_mode: "7",
+              preserve_interword_spaces: "1"
+            });
+          }
+          return worker;
+        })().catch((error) => {
+          ocrWorkerPromise = null;
+          throw error;
+        });
+      }
+
+      return ocrWorkerPromise;
+    }
+
+    function normalizeOcrText(rawText) {
+      const candidates = String(rawText || "")
+        .toUpperCase()
+        .split("\n")
+        .map((line) => line.replace(/[^A-Z0-9 -]/g, " ").replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .filter((line) => line.length >= 5);
+
+      if (!candidates.length) {
+        return "";
+      }
+
+      const preferred = candidates.find((line) => /[A-Z]/.test(line) && /\d/.test(line));
+      const bestCandidate = preferred || candidates.sort((a, b) => b.length - a.length)[0] || "";
+      const compactCandidate = bestCandidate.replace(/\s+/g, " ").trim();
+
+      if (/^[A-Z0-9]{5,}\s\d{2,}$/.test(compactCandidate)) {
+        return compactCandidate;
+      }
+
+      if (/^[A-Z0-9]{7,}$/.test(compactCandidate.replace(/\s/g, ""))) {
+        return compactCandidate.replace(/^([A-Z0-9]{5,10})(\d{2,5})$/, "$1 $2");
+      }
+
+      return compactCandidate;
+    }
+
+    function prepareOcrCanvasFromSource(source, sourceWidth, sourceHeight, yStartRatio = 0.56, heightRatio = 0.24, threshold = 170) {
+      const cropWidth = Math.floor(sourceWidth * 0.92);
+      const cropHeight = Math.max(60, Math.floor(sourceHeight * heightRatio));
+      const cropX = Math.max(0, Math.floor((sourceWidth - cropWidth) / 2));
+      const cropY = Math.max(0, Math.min(sourceHeight - cropHeight, Math.floor(sourceHeight * yStartRatio)));
+      const scale = 2.6;
+      const targetWidth = Math.max(320, Math.floor(cropWidth * scale));
+      const targetHeight = Math.max(96, Math.floor(cropHeight * scale));
+      const context = getOcrCanvasContext(targetWidth, targetHeight);
+
+      if (!context) {
+        return null;
+      }
+
+      context.imageSmoothingEnabled = false;
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, targetWidth, targetHeight);
+      context.drawImage(
+        source,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
+        0,
+        0,
+        targetWidth,
+        targetHeight
+      );
+
+      const imageData = context.getImageData(0, 0, targetWidth, targetHeight);
+      const { data } = imageData;
+      for (let index = 0; index < data.length; index += 4) {
+        const gray = Math.round((data[index] + data[index + 1] + data[index + 2]) / 3);
+        const boosted = gray > threshold ? 255 : 0;
+        data[index] = boosted;
+        data[index + 1] = boosted;
+        data[index + 2] = boosted;
+        data[index + 3] = 255;
+      }
+      context.putImageData(imageData, 0, 0);
+
+      return ocrCanvas;
+    }
+
+    function buildOcrAttemptCanvases(source, sourceWidth, sourceHeight) {
+      return [
+        prepareOcrCanvasFromSource(source, sourceWidth, sourceHeight, 0.54, 0.28, 185),
+        prepareOcrCanvasFromSource(source, sourceWidth, sourceHeight, 0.58, 0.24, 170),
+        prepareOcrCanvasFromSource(source, sourceWidth, sourceHeight, 0.62, 0.22, 155),
+        prepareOcrCanvasFromSource(source, sourceWidth, sourceHeight, 0.66, 0.18, 145),
+        prepareOcrCanvasFromSource(source, sourceWidth, sourceHeight, 0.50, 0.36, 175)
+      ].filter(Boolean);
+    }
+
+    async function recognizePrintedTextFromCanvas(canvas) {
+      if (!canvas || ocrInFlight) {
+        return "";
+      }
+
+      const worker = await loadOcrWorker();
+      if (!worker) {
+        return "";
+      }
+
+      ocrInFlight = true;
+      try {
+        const result = await worker.recognize(canvas);
+        return normalizeOcrText(result && result.data && result.data.text);
+      } finally {
+        ocrInFlight = false;
+      }
+    }
+
+    async function recognizePrintedTextFromVideoFrame() {
+      const video = getReaderVideo();
+      if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+        return "";
+      }
+
+      const attempts = buildOcrAttemptCanvases(video, video.videoWidth, video.videoHeight);
+
+      for (const canvas of attempts) {
+        const text = await recognizePrintedTextFromCanvas(canvas);
+        if (text) {
+          return text;
+        }
+      }
+
+      return "";
+    }
+
+    async function createImageBitmapFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        const objectUrl = URL.createObjectURL(file);
+
+        image.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          resolve(image);
+        };
+        image.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error("Impossible de lire l'image choisie."));
+        };
+        image.src = objectUrl;
+      });
+    }
+
+    async function recognizePrintedTextFromFile(file) {
+      const image = await createImageBitmapFromFile(file);
+      const attempts = buildOcrAttemptCanvases(image, image.naturalWidth, image.naturalHeight);
+
+      for (const canvas of attempts) {
+        const text = await recognizePrintedTextFromCanvas(canvas);
+        if (text) {
+          return text;
+        }
+      }
+
+      return "";
+    }
+
+    async function decodeCode128FromFileWithZbar(file) {
+      const fallbackModule = await loadIosFallbackScannerModule();
+      if (!fallbackModule || typeof fallbackModule.scanImageData !== "function") {
+        return "";
+      }
+
+      const image = await createImageBitmapFromFile(file);
+      const sourceWidth = image.naturalWidth;
+      const sourceHeight = image.naturalHeight;
+      const cropWidth = Math.floor(sourceWidth * 0.96);
+      const cropHeight = Math.max(120, Math.floor(sourceHeight * 0.42));
+      const cropX = Math.max(0, Math.floor((sourceWidth - cropWidth) / 2));
+      const cropY = Math.max(0, Math.floor((sourceHeight - cropHeight) / 2));
+      const targetWidth = Math.min(cropWidth, 1600);
+      const targetHeight = Math.max(140, Math.floor(cropHeight * (targetWidth / cropWidth)));
+      const context = getIosFallbackCanvasContext(targetWidth, targetHeight);
+
+      if (!context) {
+        return "";
+      }
+
+      context.drawImage(
+        image,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
+        0,
+        0,
+        targetWidth,
+        targetHeight
+      );
+
+      const imageData = context.getImageData(0, 0, targetWidth, targetHeight);
+      const symbols = await fallbackModule.scanImageData(imageData);
+      return extractCode128FromSymbols(symbols);
+    }
+
+    async function loadIosFallbackScannerModule() {
+      if (!isLikelyIOS) {
+        return null;
+      }
+
+      if (!iosFallbackScannerModulePromise) {
+        iosFallbackScannerModulePromise = import(IOS_FALLBACK_SCANNER_MODULE_URL);
+      }
+
+      return iosFallbackScannerModulePromise;
+    }
+
+    function extractCode128FromSymbols(symbols) {
+      if (!Array.isArray(symbols) || !symbols.length) {
+        return "";
+      }
+
+      const code128Symbol = symbols.find((symbol) => {
+        const typeName = String((symbol && symbol.typeName) || "").toUpperCase();
+        return typeName === "CODE-128" || typeName === "CODE_128" || typeName === "CODE128";
+      }) || symbols[0];
+
+      if (!code128Symbol || typeof code128Symbol.decode !== "function") {
+        return "";
+      }
+
+      return String(code128Symbol.decode() || "").trim();
+    }
+
+    async function scanCurrentVideoFrameWithIosFallback() {
+      const video = getReaderVideo();
+      if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+        return "";
+      }
+
+      const barcodeDetectorValue = await decodeCode128WithBarcodeDetector(video);
+      if (barcodeDetectorValue) {
+        return barcodeDetectorValue;
+      }
+
+      const fallbackModule = await loadIosFallbackScannerModule();
+      if (!fallbackModule || typeof fallbackModule.scanImageData !== "function") {
+        return "";
+      }
+
+      const sourceWidth = video.videoWidth;
+      const sourceHeight = video.videoHeight;
+      const cropWidth = Math.floor(sourceWidth * 0.92);
+      const cropHeight = Math.floor(sourceHeight * 0.34);
+      const cropX = Math.max(0, Math.floor((sourceWidth - cropWidth) / 2));
+      const cropY = Math.max(0, Math.floor((sourceHeight - cropHeight) / 2));
+      const targetWidth = Math.min(cropWidth, 1280);
+      const targetHeight = Math.max(120, Math.floor(cropHeight * (targetWidth / cropWidth)));
+      const context = getIosFallbackCanvasContext(targetWidth, targetHeight);
+
+      if (!context) {
+        return "";
+      }
+
+      context.drawImage(
+        video,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
+        0,
+        0,
+        targetWidth,
+        targetHeight
+      );
+
+      const imageData = context.getImageData(0, 0, targetWidth, targetHeight);
+      const symbols = await fallbackModule.scanImageData(imageData);
+
+      return extractCode128FromSymbols(symbols);
+    }
+
+    async function handleDecodedCode(decodedText, decodedResult = null, forcedLabel = "") {
+      const cleanValue = String(decodedText || "").trim();
+
+      if (!cleanValue || hasHandledScan) {
+        return;
+      }
+
+      hasHandledScan = true;
+      setLiveDetectedText(cleanValue, forcedLabel || "Lecture");
+      resultField.value = cleanValue;
+      detectedType.textContent = forcedLabel
+        ? `Type détecté : ${forcedLabel}`
+        : decodedResult
+          ? `Type détecté : ${getDetectedFormatLabel(decodedResult)}`
+          : "Type détecté : Code 128 (fallback iPhone)";
+      setStatus("Code-barres détecté. Envoi vers Google Sheets en cours...", "");
+      await stopCamera();
+      await sendToGoogleSheets(cleanValue);
+      setControls();
+    }
+
+    async function runIosFallbackScanLoop() {
+      if (!isLikelyIOS || !cameraRunning || iosFallbackLoopActive) {
+        return;
+      }
+
+      iosFallbackLoopActive = true;
+      cameraNote.textContent = "Mode iPhone renforce actif : analyse Code 128 en continu pour ameliorer la lecture.";
+
+      const loop = async () => {
+        if (!cameraRunning || !iosFallbackLoopActive || hasHandledScan) {
+          clearIosFallbackLoop();
+          return;
+        }
+
+        try {
+          const decodedText = await scanCurrentVideoFrameWithIosFallback();
+
+          if (decodedText) {
+            setLiveDetectedText(decodedText, "Lecture live");
+            await handleDecodedCode(decodedText);
+            clearIosFallbackLoop();
+            return;
+          }
+
+          const now = Date.now();
+          if (!ocrInFlight && now - lastOcrAttemptAt > 1800) {
+            lastOcrAttemptAt = now;
+            const printedText = await recognizePrintedTextFromVideoFrame();
+            if (printedText) {
+              setLiveDetectedText(printedText, "Texte OCR live");
+              await handleDecodedCode(printedText, null, "Texte imprime sous le code-barres");
+              clearIosFallbackLoop();
+              return;
+            }
+          }
+        } catch (error) {
+          cameraNote.textContent = "Le mode iPhone renforce reste actif, avec tentative OCR du texte imprime sous le code-barres.";
+        }
+
+        iosFallbackLoopTimer = window.setTimeout(loop, 280);
+      };
+
+      loop();
     }
 
     function getSupportedFormats() {
@@ -556,12 +1060,7 @@
         cameraConfig,
         scanConfig,
         async (decodedText, decodedResult) => {
-          resultField.value = decodedText;
-          detectedType.textContent = `Type détecté : ${getDetectedFormatLabel(decodedResult)}`;
-          setStatus("Code-barres détecté. Envoi vers Google Sheets en cours...", "");
-          await stopCamera();
-          await sendToGoogleSheets(decodedText);
-          setControls();
+          await handleDecodedCode(decodedText, decodedResult);
         },
         () => {}
       );
@@ -755,18 +1254,16 @@
     function setControls() {
       const resolvedLocation = getResolvedLocation();
       const canUseLocation = Boolean(resolvedLocation);
-      const hasImageFile = Boolean(imageFileField.files && imageFileField.files[0]);
 
       restartBtn.disabled = cameraRunning || !canUseLocation;
       stopBtn.disabled = !cameraRunning;
       sendBtn.disabled = !canUseLocation || !resultField.value.trim();
       manualSendBtn.disabled = !canUseLocation || !manualCodeField.value.trim();
-      imageScanBtn.disabled = !canUseLocation || !hasImageFile;
       updateTorchButton();
     }
 
     async function startCamera() {
-      if (cameraRunning) return;
+      if (cameraRunning || cameraStarting) return;
 
       if (!getResolvedLocation()) {
         setStatus("Choisis d'abord un emplacement avant d'ouvrir la caméra.", "error");
@@ -783,14 +1280,19 @@
       setStatus("Ouverture de la caméra...", "");
 
       try {
+        cameraStarting = true;
+        setLiveDetectedText("");
+        hasHandledScan = false;
+        lastOcrAttemptAt = 0;
+        clearIosFallbackLoop();
         resetTorchState();
         const preferredScanConfig = {
-          fps: 10,
+          fps: isLikelyIOS ? 6 : 10,
           qrbox: getScanBox,
           disableFlip: false
         };
         const fallbackScanConfig = {
-          fps: 10,
+          fps: isLikelyIOS ? 6 : 10,
           qrbox: { width: 250, height: 250 },
           disableFlip: false
         };
@@ -842,6 +1344,9 @@
           : "Astuce : touche l'image pour tenter une mise au point locale et double tape pour zoomer si l'appareil le permet.";
         await detectTorchAvailability();
         await detectZoomAvailability();
+        if (isLikelyIOS) {
+          void runIosFallbackScanLoop();
+        }
         setStatus("Caméra active. Place le code-barres devant l'objectif.", "");
         setControls();
       } catch (error) {
@@ -850,11 +1355,19 @@
         qrCodeScanner = null;
         cameraRunning = false;
         setControls();
+      } finally {
+        cameraStarting = false;
       }
     }
 
     async function stopCamera() {
+      if (cameraStopping) {
+        return;
+      }
+
       if (!qrCodeScanner || !cameraRunning) {
+        setLiveDetectedText("");
+        clearIosFallbackLoop();
         resetTorchState();
         cameraRunning = false;
         setControls();
@@ -862,6 +1375,9 @@
       }
 
       try {
+        cameraStopping = true;
+        setLiveDetectedText("");
+        clearIosFallbackLoop();
         if (torchSupported && torchEnabled) {
           await setTorch(false);
         }
@@ -870,16 +1386,23 @@
       } catch (error) {
         setStatus("La caméra a rencontré un souci à l'arrêt : " + error.message, "error");
       } finally {
+        setLiveDetectedText("");
+        clearIosFallbackLoop();
         resetTorchState();
         qrCodeScanner = null;
         cameraRunning = false;
         setControls();
+        cameraStopping = false;
       }
     }
 
     async function sendToGoogleSheets(scannedValue = resultField.value.trim()) {
       const location = getResolvedLocation();
       const qrValue = scannedValue.trim();
+
+      if (sendInFlight) {
+        return;
+      }
 
       if (!location) {
         setStatus("Choisis un emplacement avant l'envoi.", "error");
@@ -895,6 +1418,7 @@
       setStatus("Envoi des données vers Google Sheets...", "");
 
       try {
+        sendInFlight = true;
         const response = await fetch(SCRIPT_URL, {
           method: "POST",
           headers: {
@@ -916,6 +1440,7 @@
       } catch (error) {
         setStatus("Échec de l'envoi : " + error.message, "error");
       } finally {
+        sendInFlight = false;
         setControls();
       }
     }
@@ -930,6 +1455,8 @@
     }
 
     async function restartCamera() {
+      hasHandledScan = false;
+      setLiveDetectedText("");
       resultField.value = "";
       manualCodeField.value = "";
       detectedType.textContent = "Type détecté : en attente";
@@ -950,50 +1477,6 @@
       await sendToGoogleSheets(manualValue);
     }
 
-    async function analyzeImageFile() {
-      const imageFile = imageFileField.files && imageFileField.files[0];
-
-      if (!getResolvedLocation()) {
-        setStatus("Choisis un emplacement avant d'analyser une image.", "error");
-        setControls();
-        return;
-      }
-
-      if (!imageFile) {
-        setStatus("Choisis une image avant de lancer l'analyse.", "error");
-        setControls();
-        return;
-      }
-
-      setStatus("Analyse de l'image en cours...", "");
-
-      try {
-        if (cameraRunning) {
-          await stopCamera();
-        }
-
-        const imageScanner = getScannerInstance();
-        const scanResult = await imageScanner.scanFile(imageFile, false);
-        const decodedText = typeof scanResult === "string"
-          ? scanResult
-          : (scanResult && scanResult.decodedText) || "";
-
-        resultField.value = decodedText;
-        detectedType.textContent = `Type détecté : ${getDetectedFormatLabel(scanResult)}`;
-        setStatus("Code-barres détecté dans l'image. Envoi vers Google Sheets en cours...", "");
-        await sendToGoogleSheets(decodedText);
-
-        try {
-          await imageScanner.clear();
-        } catch (clearError) {}
-      } catch (error) {
-        detectedType.textContent = "Type détecté : en attente";
-        setStatus("Impossible d'analyser l'image : " + error.message, "error");
-      } finally {
-        setControls();
-      }
-    }
-
     function bindUi() {
       if (scannerLibraryReady) return;
       scannerLibraryReady = true;
@@ -1003,9 +1486,7 @@
       sendBtn.addEventListener("click", sendToGoogleSheets);
       torchBtn.addEventListener("click", toggleTorch);
       manualSendBtn.addEventListener("click", sendManualCode);
-      imageScanBtn.addEventListener("click", analyzeImageFile);
-      document.querySelector(".camera").addEventListener("click", handleCameraTap);
-      document.querySelector(".camera").addEventListener("touchend", handleCameraTap, { passive: true });
+      document.querySelector(".camera").addEventListener("pointerup", handleCameraTap);
       locationField.addEventListener("change", async () => {
         updateLocationFields();
         await maybeAutoStartCamera();
@@ -1020,10 +1501,15 @@
       });
       resultField.addEventListener("input", setControls);
       manualCodeField.addEventListener("input", setControls);
-      imageFileField.addEventListener("change", setControls);
 
       updateLocationFields();
       setControls();
+      installBarcodeDetectorPolyfill();
+
+      if (isLikelyIOS) {
+        void getCode128BarcodeDetector().catch(() => {});
+        void loadOcrWorker().catch(() => {});
+      }
     }
 
     if (document.readyState === "loading") {

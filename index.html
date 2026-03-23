@@ -650,6 +650,19 @@
       return document.querySelector(`#${readerId} video`);
     }
 
+    async function waitForScannerLibrary(timeoutMs = 4000) {
+      const startAt = Date.now();
+
+      while (Date.now() - startAt < timeoutMs) {
+        if (window.Html5Qrcode && typeof window.Html5Qrcode === "function") {
+          return true;
+        }
+        await new Promise((resolve) => window.setTimeout(resolve, 120));
+      }
+
+      return Boolean(window.Html5Qrcode && typeof window.Html5Qrcode === "function");
+    }
+
     function setLiveDetectedText(value = "", label = "Texte détecté") {
       const cleanValue = String(value || "").trim();
 
@@ -1393,7 +1406,9 @@
         return;
       }
 
-      if (!window.Html5Qrcode || typeof window.Html5Qrcode !== "function") {
+      const scannerLibraryLoaded = await waitForScannerLibrary();
+
+      if (!scannerLibraryLoaded) {
         setStatus("La librairie de scan n'est pas encore chargée. Recharge la page puis réessaie.", "error");
         setControls();
         return;

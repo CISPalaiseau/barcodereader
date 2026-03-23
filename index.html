@@ -295,17 +295,6 @@
             </select>
           </div>
 
-          <div style="grid-column: 1 / -1;">
-            <label for="barcodeType">Type de code-barres</label>
-            <select id="barcodeType">
-              <option value="CODE_128" selected>Code 128</option>
-              <option value="AUTO">Auto</option>
-              <option value="EAN_UPC">EAN / UPC</option>
-              <option value="CODE_39_ITF">Code 39 / ITF</option>
-              <option value="PDF_417">PDF417</option>
-              <option value="DATA_MATRIX">Data Matrix</option>
-            </select>
-          </div>
         </div>
 
         <div id="subfields" class="subfields hidden" style="margin-top: 16px;">
@@ -419,7 +408,6 @@
     const otherWrap = document.getElementById("otherWrap");
     const otherLocationField = document.getElementById("otherLocation");
     const subfields = document.getElementById("subfields");
-    const barcodeTypeField = document.getElementById("barcodeType");
     const resultField = document.getElementById("result");
     const restartBtn = document.getElementById("restartBtn");
     const stopBtn = document.getElementById("stopBtn");
@@ -443,47 +431,7 @@
         return undefined;
       }
 
-      const selectedType = barcodeTypeField.value;
-      const formatGroups = {
-        AUTO: [
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.CODE_93,
-          Html5QrcodeSupportedFormats.CODABAR,
-          Html5QrcodeSupportedFormats.ITF,
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
-          Html5QrcodeSupportedFormats.PDF_417,
-          Html5QrcodeSupportedFormats.DATA_MATRIX
-        ],
-        CODE_128: [
-          Html5QrcodeSupportedFormats.CODE_128
-        ],
-        EAN_UPC: [
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION
-        ],
-        CODE_39_ITF: [
-          Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.CODE_93,
-          Html5QrcodeSupportedFormats.CODABAR,
-          Html5QrcodeSupportedFormats.ITF
-        ],
-        PDF_417: [
-          Html5QrcodeSupportedFormats.PDF_417
-        ],
-        DATA_MATRIX: [
-          Html5QrcodeSupportedFormats.DATA_MATRIX
-        ]
-      };
-
-      return (formatGroups[selectedType] || formatGroups.AUTO)
+      return [Html5QrcodeSupportedFormats.CODE_128]
         .filter((format) => typeof format === "number");
     }
 
@@ -1078,15 +1026,6 @@
       document.querySelector(".camera").addEventListener("touchend", handleCameraTap, { passive: true });
       locationField.addEventListener("change", async () => {
         updateLocationFields();
-        await maybeAutoStartCamera();
-      });
-      barcodeTypeField.addEventListener("change", async () => {
-        detectedType.textContent = "Type détecté : en attente";
-        if (cameraRunning) {
-          await stopCamera();
-          await startCamera();
-          return;
-        }
         await maybeAutoStartCamera();
       });
       chariotNumberField.addEventListener("change", maybeAutoStartCamera);

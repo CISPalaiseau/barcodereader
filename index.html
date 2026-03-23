@@ -339,6 +339,10 @@
       white-space: pre-line;
     }
 
+    .inline-status {
+      margin-top: 12px;
+    }
+
     .status {
       padding: 14px 16px;
       border-radius: 10px;
@@ -490,6 +494,7 @@
           Astuce : touche l'image pour tenter une mise au point locale si l'appareil le permet.
         </p>
         <p id="lastReadout" class="last-readout"><strong>Dernière lecture :</strong> en attente</p>
+        <div id="cameraStatus" class="status inline-status">En attente d'un scan.</div>
       </div>
 
       <div class="section camera-panel">
@@ -512,6 +517,7 @@
         <div class="actions" style="margin-top: 12px;">
           <button id="manualSendBtn" class="primary" type="button" disabled>Envoyer la saisie manuelle</button>
         </div>
+        <div id="manualStatus" class="status inline-status">En attente d'un envoi manuel.</div>
         <p id="detectedType" class="hint camera-note">Type détecté : en attente</p>
       </div>
 
@@ -593,6 +599,8 @@
     const searchBtn = document.getElementById("searchBtn");
     const searchResult = document.getElementById("searchResult");
     const statusBox = document.getElementById("status");
+    const cameraStatusBox = document.getElementById("cameraStatus");
+    const manualStatusBox = document.getElementById("manualStatus");
     const cameraNote = document.getElementById("cameraNote");
     const focusRing = document.getElementById("focusRing");
     const detectedType = document.getElementById("detectedType");
@@ -1081,6 +1089,7 @@
       setLiveDetectedText(cleanValue, forcedLabel || "Lecture");
       resultField.value = cleanValue;
       setLastReadout(cleanValue);
+      setInlineStatus(cameraStatusBox, "Validation du scan en cours...", "");
       detectedType.textContent = forcedLabel
         ? `Type détecté : ${forcedLabel}`
         : decodedResult
@@ -1386,6 +1395,16 @@
       }
     }
 
+    function setInlineStatus(target, message, type = "") {
+      if (!target) return;
+
+      target.textContent = message;
+      target.className = "status inline-status";
+      if (type) {
+        target.classList.add(type);
+      }
+    }
+
     function setControls() {
       const resolvedLocation = getResolvedLocation();
       const canUseLocation = Boolean(resolvedLocation);
@@ -1538,6 +1557,8 @@
     async function sendToGoogleSheets(scannedValue = resultField.value.trim()) {
       const location = getResolvedLocation();
       const qrValue = scannedValue.trim();
+      const currentManualValue = buildBairCode(manualTypeField.value, manualCodeField.value);
+      const targetStatusBox = qrValue === currentManualValue ? manualStatusBox : cameraStatusBox;
 
       if (sendInFlight) {
         return;
@@ -1545,15 +1566,18 @@
 
       if (!location) {
         setStatus("Choisis un emplacement avant l'envoi.", "error");
+        setInlineStatus(targetStatusBox, "Choisis un emplacement avant l'envoi.", "error");
         return;
       }
 
       if (!qrValue) {
         setStatus("Aucune donnée de code-barres à envoyer pour l'instant.", "error");
+        setInlineStatus(targetStatusBox, "Aucune donnée à envoyer.", "error");
         return;
       }
 
       setStatus("Envoi des données vers Google Sheets...", "");
+      setInlineStatus(targetStatusBox, "Envoi en cours...", "");
 
       try {
         sendInFlight = true;
@@ -1576,8 +1600,10 @@
         }
 
         setStatus("Donnée envoyée avec succès vers Google Sheets.", "ok");
+        setInlineStatus(targetStatusBox, "Validation enregistrée avec succès.", "ok");
       } catch (error) {
         setStatus("Échec de l'envoi : " + error.message, "error");
+        setInlineStatus(targetStatusBox, "Échec de l'envoi : " + error.message, "error");
       } finally {
         sendInFlight = false;
         setControls();
@@ -1616,6 +1642,7 @@
 
       if (!manualValue) {
         setStatus("Saisis un numero avant l'envoi manuel.", "error");
+        setInlineStatus(manualStatusBox, "Saisis un numero avant l'envoi manuel.", "error");
         return;
       }
 
@@ -1719,6 +1746,8 @@
 
       updateLocationFields();
       setLastReadout("");
+      setInlineStatus(cameraStatusBox, "En attente d'un scan.");
+      setInlineStatus(manualStatusBox, "En attente d'un envoi manuel.");
       setSearchResult("Aucune recherche lancée.");
       setControls();
       installBarcodeDetectorPolyfill();

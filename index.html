@@ -375,7 +375,7 @@
           <button id="torchBtn" class="secondary" type="button" disabled>Flash indisponible</button>
         </div>
         <p id="cameraNote" class="hint camera-note">
-          Astuce : touche l'image pour tenter une mise au point locale et double tape pour zoomer si l'appareil le permet.
+          Astuce : touche l'image pour tenter une mise au point locale si l'appareil le permet.
         </p>
       </div>
 
@@ -420,10 +420,6 @@
     let cameraStarting = false;
     let cameraStopping = false;
     let sendInFlight = false;
-    let zoomSupported = false;
-    let zoomLevel = 1;
-    let zoomRange = { min: 1, max: 1, step: 0.5 };
-    let lastCameraTapAt = 0;
     let hasHandledScan = false;
     let iosFallbackScannerModulePromise = null;
     let iosFallbackLoopActive = false;
@@ -987,9 +983,6 @@
     function resetTorchState() {
       torchSupported = false;
       torchEnabled = false;
-      zoomSupported = false;
-      zoomLevel = 1;
-      zoomRange = { min: 1, max: 1, step: 0.5 };
     }
 
     function updateTorchButton() {
@@ -1026,33 +1019,6 @@
       updateTorchButton();
     }
 
-    async function detectZoomAvailability() {
-      if (!qrCodeScanner || !cameraRunning || typeof qrCodeScanner.getRunningTrackCapabilities !== "function") {
-        zoomSupported = false;
-        return;
-      }
-
-      try {
-        const capabilities = qrCodeScanner.getRunningTrackCapabilities() || {};
-        const zoom = capabilities.zoom;
-
-        if (!zoom || typeof zoom.min !== "number" || typeof zoom.max !== "number") {
-          zoomSupported = false;
-          return;
-        }
-
-        zoomSupported = zoom.max > zoom.min;
-        zoomRange = {
-          min: zoom.min,
-          max: zoom.max,
-          step: typeof zoom.step === "number" && zoom.step > 0 ? zoom.step : 0.5
-        };
-        zoomLevel = zoom.min;
-      } catch (error) {
-        zoomSupported = false;
-      }
-    }
-
     async function startScannerWithConfig(cameraConfig, scanConfig) {
       qrCodeScanner = getScannerInstance();
 
@@ -1077,45 +1043,6 @@
 
       torchEnabled = enabled;
       updateTorchButton();
-    }
-
-    async function applyZoom(level) {
-      if (!cameraRunning || !qrCodeScanner || !zoomSupported || typeof qrCodeScanner.applyVideoConstraints !== "function") {
-        return false;
-      }
-
-      const clampedLevel = Math.min(Math.max(level, zoomRange.min), zoomRange.max);
-
-      await qrCodeScanner.applyVideoConstraints({
-        advanced: [{ zoom: clampedLevel }]
-      });
-
-      zoomLevel = clampedLevel;
-      return true;
-    }
-
-    async function handleCameraDoubleTap() {
-      if (!cameraRunning) return;
-
-      if (!zoomSupported) {
-        cameraNote.textContent = "Le double tap est détecté, mais le zoom n'est pas disponible sur cet appareil.";
-        return;
-      }
-
-      const baseStep = zoomRange.step || 0.5;
-      const largeStep = Math.max(baseStep, (zoomRange.max - zoomRange.min) / 3 || baseStep);
-      let nextZoom = zoomLevel + largeStep;
-
-      if (nextZoom > zoomRange.max - baseStep / 2) {
-        nextZoom = zoomRange.min;
-      }
-
-      try {
-        await applyZoom(nextZoom);
-        cameraNote.textContent = `Zoom x${zoomLevel.toFixed(1)} appliqué. Double tape encore pour changer le niveau.`;
-      } catch (error) {
-        cameraNote.textContent = "Impossible de modifier le zoom sur cet appareil.";
-      }
     }
 
     async function toggleTorch() {
@@ -1198,15 +1125,6 @@
     }
 
     async function handleCameraTap(event) {
-      const now = Date.now();
-
-      if (now - lastCameraTapAt < 300) {
-        lastCameraTapAt = 0;
-        await handleCameraDoubleTap();
-        return;
-      }
-
-      lastCameraTapAt = now;
       await focusCameraAtPoint(event);
     }
 
@@ -1340,10 +1258,9 @@
 
         cameraRunning = true;
         cameraNote.textContent = isLikelyIOS
-          ? "Astuce iPhone : touche l'image pour tenter la mise au point et double tape pour zoomer si Safari l'autorise."
-          : "Astuce : touche l'image pour tenter une mise au point locale et double tape pour zoomer si l'appareil le permet.";
+          ? "Astuce iPhone : touche l'image pour tenter la mise au point si Safari l'autorise."
+          : "Astuce : touche l'image pour tenter une mise au point locale si l'appareil le permet.";
         await detectTorchAvailability();
-        await detectZoomAvailability();
         if (isLikelyIOS) {
           void runIosFallbackScanLoop();
         }

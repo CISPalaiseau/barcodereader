@@ -180,6 +180,12 @@
       width: 100%;
     }
 
+    #reader video {
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+    }
+
     .camera-toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -500,12 +506,6 @@
     }
 
     async function detectTorchAvailability() {
-      if (isLikelyIOS) {
-        torchSupported = false;
-        updateTorchButton();
-        return;
-      }
-
       if (!qrCodeScanner || !cameraRunning || typeof qrCodeScanner.getRunningTrackCapabilities !== "function") {
         resetTorchState();
         updateTorchButton();
@@ -523,11 +523,6 @@
     }
 
     async function detectZoomAvailability() {
-      if (isLikelyIOS) {
-        zoomSupported = false;
-        return;
-      }
-
       if (!qrCodeScanner || !cameraRunning || typeof qrCodeScanner.getRunningTrackCapabilities !== "function") {
         zoomSupported = false;
         return;
@@ -573,10 +568,6 @@
     }
 
     async function setTorch(enabled) {
-      if (isLikelyIOS) {
-        return;
-      }
-
       if (!cameraRunning || !qrCodeScanner || !torchSupported || typeof qrCodeScanner.applyVideoConstraints !== "function") {
         return;
       }
@@ -590,10 +581,6 @@
     }
 
     async function applyZoom(level) {
-      if (isLikelyIOS) {
-        return false;
-      }
-
       if (!cameraRunning || !qrCodeScanner || !zoomSupported || typeof qrCodeScanner.applyVideoConstraints !== "function") {
         return false;
       }
@@ -675,11 +662,6 @@
       }
 
       showFocusRing(clientX, clientY);
-
-      if (isLikelyIOS) {
-        cameraNote.textContent = "Sur iPhone, la mise au point tactile et le zoom navigateur sont désactivés pour garder la caméra stable.";
-        return;
-      }
 
       if (typeof qrCodeScanner.getRunningTrackCapabilities !== "function" || typeof qrCodeScanner.applyVideoConstraints !== "function") {
         return;
@@ -856,7 +838,7 @@
 
         cameraRunning = true;
         cameraNote.textContent = isLikelyIOS
-          ? "Sur iPhone, le scan reste volontairement simple pour garder une caméra stable."
+          ? "Astuce iPhone : touche l'image pour tenter la mise au point et double tape pour zoomer si Safari l'autorise."
           : "Astuce : touche l'image pour tenter une mise au point locale et double tape pour zoomer si l'appareil le permet.";
         await detectTorchAvailability();
         await detectZoomAvailability();

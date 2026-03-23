@@ -1349,6 +1349,8 @@
       if (!showLog) logTypeField.value = "";
       if (!showOther) otherLocationField.value = "";
 
+      setAppReadyState();
+
       if (baseLocation && !getResolvedLocation()) {
         if (showChariot) {
           setStatus("Choisis le numero du chariot pour ouvrir la caméra.", "");
@@ -1668,10 +1670,17 @@
       document.querySelector(".camera").addEventListener("pointerup", handleCameraTap);
       locationField.addEventListener("change", async () => {
         updateLocationFields();
+        setControls();
         await maybeAutoStartCamera();
       });
-      chariotNumberField.addEventListener("change", maybeAutoStartCamera);
-      logTypeField.addEventListener("change", maybeAutoStartCamera);
+      chariotNumberField.addEventListener("change", async () => {
+        setControls();
+        await maybeAutoStartCamera();
+      });
+      logTypeField.addEventListener("change", async () => {
+        setControls();
+        await maybeAutoStartCamera();
+      });
       otherLocationField.addEventListener("input", async () => {
         setControls();
         if (otherLocationField.value.trim()) {

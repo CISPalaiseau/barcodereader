@@ -596,9 +596,12 @@
     const liveDetectedText = document.getElementById("liveDetectedText");
     const lastReadout = document.getElementById("lastReadout");
 
+    function hasStartedSelection() {
+      return Boolean(locationField.value.trim());
+    }
+
     function setAppReadyState() {
-      const canUseLocation = Boolean(getResolvedLocation());
-      appShell.classList.toggle("ready", canUseLocation);
+      appShell.classList.toggle("ready", hasStartedSelection());
     }
 
     function setLastReadout(value = "", label = "Dernière lecture") {
@@ -1345,6 +1348,16 @@
       if (!showChariot) chariotNumberField.value = "";
       if (!showLog) logTypeField.value = "";
       if (!showOther) otherLocationField.value = "";
+
+      if (baseLocation && !getResolvedLocation()) {
+        if (showChariot) {
+          setStatus("Choisis le numero du chariot pour ouvrir la caméra.", "");
+        } else if (showLog) {
+          setStatus("Choisis le type de LOG pour ouvrir la caméra.", "");
+        } else if (showOther) {
+          setStatus("Précise l'emplacement pour ouvrir la caméra.", "");
+        }
+      }
     }
 
     function setStatus(message, type = "") {

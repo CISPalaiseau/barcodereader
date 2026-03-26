@@ -270,7 +270,7 @@
       border-radius: 12px;
       border: 1px solid var(--border);
       background: #0b0d12;
-      min-height: 360px;
+      min-height: 240px;
     }
 
     #reader {
@@ -512,7 +512,7 @@
               <label for="zoomRange">Zoom</label>
               <input id="zoomRange" type="range" min="1" max="1" step="0.1" value="1">
             </div>
-            <p id="cameraNote" class="hint">La caméra se ferme automatiquement après 10 secondes si aucun scan valide n'est détecté.</p>
+            <p id="cameraNote" class="hint">La caméra se ferme automatiquement après 15 secondes si aucun scan valide n'est détecté.</p>
           </div>
           <div id="lastReadout" class="summary-card" style="margin-top: 12px;"><strong>Dernière lecture :</strong> en attente</div>
           <div id="cameraStatus" class="status" style="margin-top: 12px;">En attente d'un scan valide.</div>
@@ -523,8 +523,8 @@
           <p class="hint" style="margin-bottom: 16px;">Le scan n'a pas abouti à temps. Renseigne la BAIR manuellement.</p>
           <label for="manualType">Type BAIR</label>
           <select id="manualType">
-            <option value="BAIR 91">BAIR 91</option>
             <option value="BAIR91C">BAIR91C</option>
+            <option value="BAIR 91">BAIR 91</option>
           </select>
           <label for="manualCode" style="margin-top: 12px;">Numéro</label>
           <input id="manualCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Ex. 1240">
@@ -757,7 +757,7 @@
       setStatus(manualStatusBox, "En attente d'un envoi manuel.");
       cameraPanel.classList.remove("hidden");
       manualPanel.classList.add("hidden");
-      cameraNote.textContent = "La caméra se ferme automatiquement après 10 secondes si aucun scan valide n'est détecté.";
+      cameraNote.textContent = "La caméra se ferme automatiquement après 15 secondes si aucun scan valide n'est détecté.";
       manualCodeField.value = "";
       zoomWrap.classList.remove("visible");
       zoomSupported = false;
@@ -781,7 +781,7 @@
       cancelScanTimeout();
       cameraPanel.classList.add("hidden");
       manualPanel.classList.remove("hidden");
-      setStatus(cameraStatusBox, "Aucun scan valide détecté en 10 secondes.", "error");
+      setStatus(cameraStatusBox, "Aucun scan valide détecté en 15 secondes.", "error");
       cameraNote.textContent = "La caméra a été fermée. Utilise maintenant la saisie manuelle.";
       updateMovementControls();
     }
@@ -934,7 +934,7 @@
             await stopCamera();
             openManualFallback();
           }
-        }, 10000);
+        }, 15000);
       } catch (error) {
         setStatus(cameraStatusBox, "Impossible d'ouvrir la caméra : " + error.message, "error");
         openManualFallback();

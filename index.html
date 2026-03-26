@@ -270,16 +270,25 @@
       border-radius: 12px;
       border: 1px solid var(--border);
       background: #0b0d12;
-      min-height: 240px;
+      width: min(100%, 420px);
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
     }
 
     #reader {
       width: 100%;
+      height: 100%;
+    }
+
+    #reader > div,
+    #reader__scan_region,
+    #reader__dashboard {
+      height: 100%;
     }
 
     #reader video {
       width: 100%;
-      height: auto;
+      height: 100% !important;
       object-fit: cover;
     }
 
@@ -512,10 +521,13 @@
               <label for="zoomRange">Zoom</label>
               <input id="zoomRange" type="range" min="1" max="1" step="0.1" value="1">
             </div>
-            <p id="cameraNote" class="hint">La caméra se ferme automatiquement après 15 secondes si aucun scan valide n'est détecté.</p>
+            <p id="cameraNote" class="hint">La caméra se ferme automatiquement après 10 secondes si aucun scan valide n'est détecté.</p>
           </div>
           <div id="lastReadout" class="summary-card" style="margin-top: 12px;"><strong>Dernière lecture :</strong> en attente</div>
           <div id="cameraStatus" class="status" style="margin-top: 12px;">En attente d'un scan valide.</div>
+          <div class="actions" style="margin-top: 12px;">
+            <button id="openManualBtn" class="secondary" type="button">Scan manuel</button>
+          </div>
         </div>
 
         <div id="manualPanel" class="section hidden">
@@ -524,7 +536,7 @@
           <label for="manualType">Type BAIR</label>
           <select id="manualType">
             <option value="BAIR91C">BAIR91C</option>
-            <option value="BAIR 91">BAIR 91</option>
+            <option value="BAIR91">BAIR91</option>
           </select>
           <label for="manualCode" style="margin-top: 12px;">Numéro</label>
           <input id="manualCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Ex. 1240">
@@ -559,8 +571,8 @@
           <h2 class="section-title">Consultation</h2>
           <label for="searchType">Génération BAIR</label>
           <select id="searchType">
-            <option value="BAIR 91">BAIR 91</option>
             <option value="BAIR91C">BAIR91C</option>
+            <option value="BAIR91">BAIR91</option>
           </select>
           <label for="searchCode" style="margin-top: 12px;">Numéro</label>
           <input id="searchCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Ex. 1240">
@@ -580,7 +592,8 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGuU9BcJTLmO8DxSl2on_tj9C6OrqwhFH0EY9lRu2mxDwyfPvHjfTGVIzEShjWJIkm/exec";
-    const BAIR_PATTERN = /^(BAIR91C|BAIR 91) \d{4}$/;
+    const BAIR_PATTERN = /^(BAIR91C|BAIR91) \d{4}$/;
+    const SCAN_TIMEOUT_MS = 10000;
 
     let qrCodeScanner = null;
     let cameraRunning = false;
@@ -628,6 +641,7 @@
     const cameraNote = document.getElementById("cameraNote");
     const lastReadout = document.getElementById("lastReadout");
     const cameraStatusBox = document.getElementById("cameraStatus");
+    const openManualBtn = document.getElementById("openManualBtn");
     const zoomWrap = document.getElementById("zoomWrap");
     const zoomRange = document.getElementById("zoomRange");
 
@@ -757,7 +771,7 @@
       setStatus(manualStatusBox, "En attente d'un envoi manuel.");
       cameraPanel.classList.remove("hidden");
       manualPanel.classList.add("hidden");
-      cameraNote.textContent = "La caméra se ferme automatiquement après 15 secondes si aucun scan valide n'est détecté.";
+      cameraNote.textContent = "La caméra se ferme automatiquement après 10 secondes si aucun scan valide n'est détecté.";
       manualCodeField.value = "";
       zoomWrap.classList.remove("visible");
       zoomSupported = false;
@@ -777,11 +791,16 @@
       }
     }
 
-    function openManualFallback() {
+    function openManualFallback(reason = "timeout") {
       cancelScanTimeout();
       cameraPanel.classList.add("hidden");
       manualPanel.classList.remove("hidden");
-      setStatus(cameraStatusBox, "Aucun scan valide détecté en 15 secondes.", "error");
+      const timeoutMessage = `Aucun scan valide détecté en ${SCAN_TIMEOUT_MS / 1000} secondes.`;
+      setStatus(
+        cameraStatusBox,
+        reason === "manual" ? "Passage en saisie manuelle." : timeoutMessage,
+        reason === "manual" ? "" : "error"
+      );
       cameraNote.textContent = "La caméra a été fermée. Utilise maintenant la saisie manuelle.";
       updateMovementControls();
     }
@@ -934,7 +953,7 @@
             await stopCamera();
             openManualFallback();
           }
-        }, 15000);
+        }, SCAN_TIMEOUT_MS);
       } catch (error) {
         setStatus(cameraStatusBox, "Impossible d'ouvrir la caméra : " + error.message, "error");
         openManualFallback();
@@ -954,7 +973,7 @@
       setLastReadout(cleanValue);
 
       if (!isValidBairCode(cleanValue)) {
-        setStatus(cameraStatusBox, "Code ignoré : format attendu BAIR91C XXXX ou BAIR 91 XXXX.", "error");
+        setStatus(cameraStatusBox, "Code ignoré : format attendu BAIR91C XXXX ou BAIR91 XXXX.", "error");
         return;
       }
 
@@ -1044,7 +1063,7 @@
       }
 
       if (!isValidBairCode(manualValue)) {
-        setStatus(manualStatusBox, "Le format doit être BAIR91C XXXX ou BAIR 91 XXXX.", "error");
+        setStatus(manualStatusBox, "Le format doit être BAIR91C XXXX ou BAIR91 XXXX.", "error");
         return;
       }
 
@@ -1173,6 +1192,10 @@
         updateMovementControls();
       });
       manualSendBtn.addEventListener("click", sendManualCode);
+      openManualBtn.addEventListener("click", async () => {
+        await stopCamera();
+        openManualFallback("manual");
+      });
 
       zoomRange.addEventListener("input", async () => {
         await applyZoom(zoomRange.value);

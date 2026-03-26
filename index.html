@@ -13,6 +13,7 @@
       --bg: #0f1115;
       --surface: #171a21;
       --surface-2: #1d212a;
+      --surface-3: #12151b;
       --ink: #f3f4f6;
       --muted: #a1a1aa;
       --accent: #f3f4f6;
@@ -38,209 +39,36 @@
       padding: 24px;
     }
 
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
     .app {
-      width: min(100%, 820px);
+      width: min(100%, 860px);
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 24px;
-      position: relative;
-      z-index: 1;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
     }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: clamp(1.8rem, 4vw, 2.4rem);
-      line-height: 1.1;
+      font-size: clamp(1.9rem, 4vw, 2.5rem);
+      line-height: 1.05;
       letter-spacing: -0.02em;
     }
 
-    p {
-      margin: 0;
-      line-height: 1.5;
-    }
-
     .intro {
-      color: var(--muted);
-      margin-bottom: 24px;
-      max-width: 60ch;
-    }
-
-    .grid {
-      display: grid;
-      gap: 16px;
-    }
-
-    .section {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 18px;
-    }
-
-    .section-title {
-      margin: 0 0 12px;
-      font-size: 1rem;
-      font-weight: 700;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: var(--ink);
-    }
-
-    input, textarea, button {
-      font: inherit;
-    }
-
-    input, textarea, select {
-      width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      background: #12151b;
-      color: var(--ink);
-      transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
-    }
-
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: #4b5563;
-      box-shadow: 0 0 0 4px var(--accent-glow);
-      background: #101319;
-    }
-
-    textarea {
-      min-height: 120px;
-      resize: vertical;
-    }
-
-    select {
-      appearance: none;
-      background-image:
-        linear-gradient(45deg, transparent 50%, #9ca3af 50%),
-        linear-gradient(135deg, #9ca3af 50%, transparent 50%);
-      background-position:
-        calc(100% - 22px) calc(50% - 3px),
-        calc(100% - 16px) calc(50% - 3px);
-      background-size: 6px 6px, 6px 6px;
-      background-repeat: no-repeat;
-      padding-right: 44px;
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 10px;
-      padding: 12px 16px;
-      cursor: pointer;
-      transition: transform 120ms ease, opacity 120ms ease, background 120ms ease, box-shadow 120ms ease;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-    }
-
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-      transform: none;
-    }
-
-    .primary {
-      background: var(--accent);
-      color: var(--accent-ink);
-      font-weight: 700;
-    }
-
-    .primary:hover {
-      background: #e5e7eb;
-    }
-
-    .secondary {
-      background: #222733;
-      color: var(--ink);
-      font-weight: 600;
-      border: 1px solid var(--border);
-    }
-
-    .camera {
-      position: relative;
-      overflow: hidden;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: #0b0d12;
-      min-height: 360px;
-      touch-action: manipulation;
-    }
-
-    #reader {
-      width: 100%;
-    }
-
-    #reader video {
-      width: 100%;
-      height: auto;
-      object-fit: cover;
-    }
-
-    .camera-toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .camera-note {
       margin-top: 10px;
-    }
-
-    .camera-focus-ring {
-      position: absolute;
-      width: 84px;
-      height: 84px;
-      border-radius: 50%;
-      border: 2px solid rgba(243, 244, 246, 0.9);
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.001);
-      transform: translate(-50%, -50%) scale(0.9);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 180ms ease, transform 180ms ease;
-      z-index: 3;
-    }
-
-    .camera-focus-ring.visible {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
-
-    .camera-live-text {
-      position: absolute;
-      left: 12px;
-      right: 12px;
-      bottom: 12px;
-      z-index: 4;
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: rgba(15, 17, 21, 0.82);
-      border: 1px solid rgba(243, 244, 246, 0.16);
-      color: var(--ink);
-      font-size: 0.95rem;
-      line-height: 1.35;
-      backdrop-filter: blur(6px);
-      pointer-events: none;
-    }
-
-    .camera-live-text strong {
-      color: #d4d4d8;
-      font-weight: 600;
+      color: var(--muted);
+      line-height: 1.5;
     }
 
     .hero-backdrop {
@@ -273,14 +101,15 @@
     }
 
     .hero-title {
-      margin: 0 0 10px;
       font-size: clamp(1.7rem, 4vw, 2.3rem);
       line-height: 1.05;
+      margin-bottom: 10px;
     }
 
     .hero-copy {
       color: var(--muted);
       margin-bottom: 18px;
+      line-height: 1.5;
     }
 
     .hero-warning {
@@ -289,66 +118,234 @@
       border-radius: 12px;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(243, 244, 246, 0.1);
+      line-height: 1.5;
     }
 
-    .stack {
+    .grid {
+      display: grid;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .view {
+      display: none;
+      gap: 16px;
+    }
+
+    .view.active {
+      display: grid;
+    }
+
+    .section {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .section-title {
+      margin-bottom: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.5;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .choice-card {
+      display: grid;
+      gap: 10px;
+      padding: 18px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    .choice-card h2 {
+      font-size: 1.15rem;
+    }
+
+    .choice-card p {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: var(--surface-3);
+      color: var(--ink);
+      transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #4b5563;
+      box-shadow: 0 0 0 4px var(--accent-glow);
+      background: #101319;
+    }
+
+    select {
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #9ca3af 50%),
+        linear-gradient(135deg, #9ca3af 50%, transparent 50%);
+      background-position:
+        calc(100% - 22px) calc(50% - 3px),
+        calc(100% - 16px) calc(50% - 3px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 44px;
+    }
+
+    .fields,
+    .subfields {
       display: grid;
       gap: 16px;
     }
 
-    .camera-panel,
-    .manual-panel,
-    .search-panel,
-    .status-panel {
-      display: none;
+    .subfields {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .app.ready .camera-panel,
-    .app.ready .manual-panel,
-    .app.ready .search-panel,
-    .app.ready .status-panel {
-      display: block;
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
-    .last-readout {
-      margin-top: 12px;
-      padding: 12px 14px;
+    button {
+      border: 0;
       border-radius: 10px;
-      background: #12151b;
-      border: 1px solid var(--border);
-      color: var(--ink);
-      min-height: 48px;
-      line-height: 1.45;
-      word-break: break-word;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
     }
 
-    .last-readout strong {
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      transform: none;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 700;
+    }
+
+    .secondary {
+      background: #222733;
+      color: var(--ink);
+      font-weight: 600;
+      border: 1px solid var(--border);
+    }
+
+    .camera {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0b0d12;
+      min-height: 360px;
+    }
+
+    #reader {
+      width: 100%;
+    }
+
+    #reader video {
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+    }
+
+    .camera-live-text {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 4;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(15, 17, 21, 0.82);
+      border: 1px solid rgba(243, 244, 246, 0.16);
+      color: var(--ink);
+      font-size: 0.95rem;
+      line-height: 1.35;
+      backdrop-filter: blur(6px);
+      pointer-events: none;
+    }
+
+    .camera-live-text strong {
       color: #d4d4d8;
       font-weight: 600;
     }
 
-    .search-result {
+    .camera-toolbar {
+      display: grid;
+      gap: 12px;
       margin-top: 12px;
-      padding: 14px 16px;
-      border-radius: 10px;
-      background: #12151b;
-      border: 1px solid var(--border);
-      color: var(--ink);
-      min-height: 56px;
-      line-height: 1.45;
-      white-space: pre-line;
     }
 
-    .inline-status {
-      margin-top: 12px;
+    .zoom-wrap {
+      display: none;
+      gap: 8px;
+    }
+
+    .zoom-wrap.visible {
+      display: grid;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      background: transparent;
+      box-shadow: none;
+      border: 0;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
     }
 
     .status {
       padding: 14px 16px;
       border-radius: 10px;
-      background: #12151b;
+      background: var(--surface-3);
       color: var(--ink);
       border: 1px solid var(--border);
+      line-height: 1.5;
     }
 
     .status.ok {
@@ -363,37 +360,35 @@
       color: var(--danger);
     }
 
-    .hint {
-      font-size: 0.92rem;
-      color: var(--muted);
+    .summary {
+      display: grid;
+      gap: 12px;
     }
 
-    .fields {
-      display: grid;
-      grid-template-columns: 1fr 220px;
-      gap: 16px;
+    .summary-card {
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      line-height: 1.5;
+      word-break: break-word;
     }
 
-    .subfields {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
+    .summary-card strong {
+      color: #d4d4d8;
+      font-weight: 600;
     }
 
     .hidden {
-      display: none;
+      display: none !important;
     }
 
     @media (max-width: 640px) {
       .app {
         padding: 20px;
-        border-radius: 16px;
       }
 
-      .fields {
-        grid-template-columns: 1fr;
-      }
-
+      .choice-grid,
       .subfields {
         grid-template-columns: 1fr;
       }
@@ -417,130 +412,167 @@
 
   <main class="app">
     <h1>Scanner code-barre BAIRS</h1>
-    <p class="intro">
-      Choisi un emplacement pour la BAIR.
-    </p>
+    <p class="intro">Choisis le parcours voulu pour enregistrer ou consulter un mouvement.</p>
 
     <section class="grid">
-      <div class="section">
-        <div class="fields">
-          <div style="grid-column: 1 / -1;">
-            <label for="location">Emplacement</label>
-            <select id="location">
-              <option value="">Choisir</option>
-              <option value="RESERVE CIS">RESERVE CIS</option>
-              <option value="FPT">FPT</option>
-              <option value="BEA">BEA</option>
-              <option value="EPS">EPS</option>
-              <option value="CCEMS">CCEMS</option>
-              <option value="VAR">VAR</option>
-              <option value="CHARIOT">CHARIOT</option>
-              <option value="LOG">LOG</option>
-              <option value="RESERVE TAMPON">RESERVE TAMPON</option>
-              <option value="PLUS PRESENT AU CS">PLUS PRÉSENT AU CS</option>
-              <option value="AUTRE">AUTRE</option>
-            </select>
+      <div id="homeView" class="view active">
+        <div class="choice-grid">
+          <div class="choice-card">
+            <h2>Mouvement</h2>
+            <p>Choix de l'emplacement, ouverture de la caméra, validation du scan puis envoi.</p>
+            <button id="goMovementBtn" class="primary" type="button">Ouvrir Mouvement</button>
           </div>
-
-        </div>
-
-        <div id="subfields" class="subfields hidden" style="margin-top: 16px;">
-          <div id="chariotWrap" class="hidden">
-            <label for="chariotNumber">Numero de chariot</label>
-            <select id="chariotNumber">
-              <option value="">Choisir</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
-              <option value="7">7</option>
-              <option value="8">8</option>
-              <option value="9">9</option>
-              <option value="10">10</option>
-              <option value="11">11</option>
-              <option value="12">12</option>
-            </select>
-          </div>
-
-          <div id="logWrap" class="hidden">
-            <label for="logType">Type de LOG</label>
-            <select id="logType">
-              <option value="">Choisir</option>
-              <option value="GONFLAGE">GONFLAGE</option>
-              <option value="MAINTENANCE">MAINTENANCE</option>
-            </select>
-          </div>
-
-          <div id="otherWrap" class="hidden" style="grid-column: 1 / -1;">
-            <label for="otherLocation">Preciser l'emplacement</label>
-            <input id="otherLocation" type="text" placeholder="Saisir l'emplacement">
+          <div class="choice-card">
+            <h2>Consultation</h2>
+            <p>Recherche rapide du dernier mouvement d'une BAIR à partir de sa génération et de son numéro.</p>
+            <button id="goConsultationBtn" class="secondary" type="button">Ouvrir Consultation</button>
           </div>
         </div>
       </div>
 
-      <div class="section camera-panel">
-        <h2 class="section-title">Caméra</h2>
-        <div class="camera">
-          <div id="reader"></div>
-          <div id="focusRing" class="camera-focus-ring hidden" aria-hidden="true"></div>
-          <div id="liveDetectedText" class="camera-live-text hidden" aria-live="polite"></div>
-        </div>
-        <div class="camera-toolbar">
-          <button id="torchBtn" class="secondary" type="button" disabled>Flash indisponible</button>
-        </div>
-        <p id="cameraNote" class="hint camera-note">
-          Astuce : touche l'image pour tenter une mise au point locale si l'appareil le permet.
-        </p>
-        <p id="lastReadout" class="last-readout"><strong>Dernière lecture :</strong> en attente</p>
-        <div id="cameraStatus" class="status inline-status">En attente d'un scan.</div>
-      </div>
+      <div id="movementLocationView" class="view">
+        <div class="section">
+          <h2 class="section-title">Mouvement</h2>
+          <p class="hint" style="margin-bottom: 16px;">Choisis d'abord l'emplacement. La caméra s'ouvrira ensuite automatiquement.</p>
+          <div class="fields">
+            <div>
+              <label for="location">Emplacement</label>
+              <select id="location">
+                <option value="">Choisir</option>
+                <option value="RESERVE CIS">RESERVE CIS</option>
+                <option value="FPT">FPT</option>
+                <option value="BEA">BEA</option>
+                <option value="EPS">EPS</option>
+                <option value="CCEMS">CCEMS</option>
+                <option value="VAR">VAR</option>
+                <option value="CHARIOT">CHARIOT</option>
+                <option value="LOG">LOG</option>
+                <option value="RESERVE TAMPON">RESERVE TAMPON</option>
+                <option value="PLUS PRESENT AU CS">PLUS PRÉSENT AU CS</option>
+                <option value="AUTRE">AUTRE</option>
+              </select>
+            </div>
+          </div>
 
-      <div class="section camera-panel">
+          <div id="subfields" class="subfields hidden" style="margin-top: 16px;">
+            <div id="chariotWrap" class="hidden">
+              <label for="chariotNumber">Numéro de chariot</label>
+              <select id="chariotNumber">
+                <option value="">Choisir</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+              </select>
+            </div>
+
+            <div id="logWrap" class="hidden">
+              <label for="logType">Type de LOG</label>
+              <select id="logType">
+                <option value="">Choisir</option>
+                <option value="GONFLAGE">GONFLAGE</option>
+                <option value="MAINTENANCE">MAINTENANCE</option>
+              </select>
+            </div>
+
+            <div id="otherWrap" class="hidden" style="grid-column: 1 / -1;">
+              <label for="otherLocation">Préciser l'emplacement</label>
+              <input id="otherLocation" type="text" placeholder="Saisir l'emplacement">
+            </div>
+          </div>
+        </div>
+
         <div class="actions">
-          <button id="restartBtn" class="primary" type="button" disabled>Scanner un autre code</button>
-          <button id="stopBtn" class="secondary" type="button" disabled>Arrêter</button>
+          <button id="backFromLocationBtn" class="secondary" type="button">Retour</button>
         </div>
       </div>
 
-      <div class="section manual-panel">
-        <h2 class="section-title">Saisie manuelle</h2>
-        <input id="result" type="hidden">
-        <label for="manualType">Type BAIR</label>
-        <select id="manualType">
-          <option value="BAIR 91">BAIR 91</option>
-          <option value="BAIR91C">BAIR91C</option>
-        </select>
-        <label for="manualCode">Numero / code a saisir si le scan ne fonctionne pas</label>
-        <input id="manualCode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Ex. 1240">
-        <div class="actions" style="margin-top: 12px;">
-          <button id="manualSendBtn" class="primary" type="button" disabled>Envoyer la saisie manuelle</button>
+      <div id="movementScanView" class="view">
+        <div class="section">
+          <h2 class="section-title">Mouvement</h2>
+          <div id="movementLocationPill" class="pill">Emplacement : en attente</div>
         </div>
-        <div id="manualStatus" class="status inline-status">En attente d'un envoi manuel.</div>
-        <p id="detectedType" class="hint camera-note">Type détecté : en attente</p>
-      </div>
 
-      <div class="section status-panel">
-        <div id="status" class="status">En attente d'un scan.</div>
-      </div>
-
-      <div class="section search-panel">
-        <h2 class="section-title">Recherche BAIR</h2>
-        <label for="searchType">Type BAIR</label>
-        <select id="searchType">
-          <option value="BAIR 91">BAIR 91</option>
-          <option value="BAIR91C">BAIR91C</option>
-        </select>
-        <label for="searchCode">Numéro</label>
-        <input id="searchCode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Ex. 1240">
-        <div class="actions" style="margin-top: 12px;">
-          <button id="searchBtn" class="secondary" type="button">Rechercher</button>
+        <div id="cameraPanel" class="section">
+          <h2 class="section-title">Caméra</h2>
+          <div class="camera">
+            <div id="reader"></div>
+            <div id="liveDetectedText" class="camera-live-text hidden" aria-live="polite"></div>
+          </div>
+          <div class="camera-toolbar">
+            <div id="zoomWrap" class="zoom-wrap">
+              <label for="zoomRange">Zoom</label>
+              <input id="zoomRange" type="range" min="1" max="1" step="0.1" value="1">
+            </div>
+            <p id="cameraNote" class="hint">La caméra se ferme automatiquement après 10 secondes si aucun scan valide n'est détecté.</p>
+          </div>
+          <div id="lastReadout" class="summary-card" style="margin-top: 12px;"><strong>Dernière lecture :</strong> en attente</div>
+          <div id="cameraStatus" class="status" style="margin-top: 12px;">En attente d'un scan valide.</div>
         </div>
-        <div id="searchResult" class="search-result">Aucune recherche lancée.</div>
+
+        <div id="manualPanel" class="section hidden">
+          <h2 class="section-title">Saisie manuelle</h2>
+          <p class="hint" style="margin-bottom: 16px;">Le scan n'a pas abouti à temps. Renseigne la BAIR manuellement.</p>
+          <label for="manualType">Type BAIR</label>
+          <select id="manualType">
+            <option value="BAIR 91">BAIR 91</option>
+            <option value="BAIR91C">BAIR91C</option>
+          </select>
+          <label for="manualCode" style="margin-top: 12px;">Numéro</label>
+          <input id="manualCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Ex. 1240">
+          <div class="actions" style="margin-top: 12px;">
+            <button id="manualSendBtn" class="primary" type="button" disabled>Envoyer la saisie manuelle</button>
+          </div>
+          <div id="manualStatus" class="status" style="margin-top: 12px;">En attente d'un envoi manuel.</div>
+        </div>
+
+        <div class="actions">
+          <button id="cancelMovementBtn" class="secondary" type="button">Annuler</button>
+        </div>
       </div>
 
-      <div class="status-panel">
+      <div id="resultView" class="view">
+        <div class="section">
+          <h2 class="section-title">Résultat</h2>
+          <div class="summary">
+            <div id="resultLocation" class="summary-card"><strong>Emplacement :</strong> en attente</div>
+            <div id="resultCode" class="summary-card"><strong>Contenu du scan :</strong> en attente</div>
+            <div id="resultStatus" class="status">En attente.</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="newScanBtn" class="primary" type="button">Nouveau scan</button>
+        </div>
+      </div>
+
+      <div id="consultationView" class="view">
+        <div class="section">
+          <h2 class="section-title">Consultation</h2>
+          <label for="searchType">Génération BAIR</label>
+          <select id="searchType">
+            <option value="BAIR 91">BAIR 91</option>
+            <option value="BAIR91C">BAIR91C</option>
+          </select>
+          <label for="searchCode" style="margin-top: 12px;">Numéro</label>
+          <input id="searchCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Ex. 1240">
+          <div class="actions" style="margin-top: 12px;">
+            <button id="searchBtn" class="primary" type="button">Rechercher</button>
+            <button id="backFromConsultationBtn" class="secondary" type="button">Retour</button>
+          </div>
+          <div id="searchResult" class="status" style="margin-top: 12px; white-space: pre-line;">Aucune recherche lancée.</div>
+        </div>
+      </div>
+
+      <div class="section">
         <p class="hint">Pour la caméra sur téléphone, ouvre cette page en HTTPS ou via un serveur local.</p>
       </div>
     </section>
@@ -548,37 +580,37 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGuU9BcJTLmO8DxSl2on_tj9C6OrqwhFH0EY9lRu2mxDwyfPvHjfTGVIzEShjWJIkm/exec";
-    const IOS_FALLBACK_SCANNER_MODULE_URL = "https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.11.0/dist/inlined/main.mjs";
-    const OCR_CHAR_WHITELIST = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -";
+    const BAIR_PATTERN = /^(BAIR91C|BAIR 91) \d{4}$/;
+
     let qrCodeScanner = null;
     let cameraRunning = false;
-    let torchSupported = false;
-    let torchEnabled = false;
-    let scannerLibraryReady = false;
     let cameraStarting = false;
     let cameraStopping = false;
     let sendInFlight = false;
-    let hasHandledScan = false;
-    let iosFallbackScannerModulePromise = null;
-    let iosFallbackLoopActive = false;
-    let iosFallbackLoopTimer = null;
-    let iosFallbackCanvas = null;
-    let iosFallbackContext = null;
-    let ocrCanvas = null;
-    let ocrContext = null;
-    let ocrWorkerPromise = null;
-    let ocrInFlight = false;
-    let lastOcrAttemptAt = 0;
-    let barcodeDetectorReady = false;
-    let code128Detector = null;
     let searchInFlight = false;
-    const isLikelyIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
-      || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    let hasHandledScan = false;
+    let scanTimeoutId = null;
+    let currentMovementLocation = "";
+    let scannerLibraryReady = false;
+    let zoomSupported = false;
 
-    const appShell = document.querySelector(".app");
+    const views = {
+      home: document.getElementById("homeView"),
+      movementLocation: document.getElementById("movementLocationView"),
+      movementScan: document.getElementById("movementScanView"),
+      result: document.getElementById("resultView"),
+      consultation: document.getElementById("consultationView")
+    };
+
     const welcomeOverlay = document.getElementById("welcomeOverlay");
     const welcomeBtn = document.getElementById("welcomeBtn");
-    const readerId = "reader";
+    const goMovementBtn = document.getElementById("goMovementBtn");
+    const goConsultationBtn = document.getElementById("goConsultationBtn");
+    const backFromLocationBtn = document.getElementById("backFromLocationBtn");
+    const cancelMovementBtn = document.getElementById("cancelMovementBtn");
+    const newScanBtn = document.getElementById("newScanBtn");
+    const backFromConsultationBtn = document.getElementById("backFromConsultationBtn");
+
     const locationField = document.getElementById("location");
     const chariotWrap = document.getElementById("chariotWrap");
     const chariotNumberField = document.getElementById("chariotNumber");
@@ -587,99 +619,76 @@
     const otherWrap = document.getElementById("otherWrap");
     const otherLocationField = document.getElementById("otherLocation");
     const subfields = document.getElementById("subfields");
-    const resultField = document.getElementById("result");
-    const restartBtn = document.getElementById("restartBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const torchBtn = document.getElementById("torchBtn");
+
+    const movementLocationPill = document.getElementById("movementLocationPill");
+    const cameraPanel = document.getElementById("cameraPanel");
+    const manualPanel = document.getElementById("manualPanel");
+    const readerId = "reader";
+    const liveDetectedText = document.getElementById("liveDetectedText");
+    const cameraNote = document.getElementById("cameraNote");
+    const lastReadout = document.getElementById("lastReadout");
+    const cameraStatusBox = document.getElementById("cameraStatus");
+    const zoomWrap = document.getElementById("zoomWrap");
+    const zoomRange = document.getElementById("zoomRange");
+
     const manualTypeField = document.getElementById("manualType");
     const manualCodeField = document.getElementById("manualCode");
     const manualSendBtn = document.getElementById("manualSendBtn");
+    const manualStatusBox = document.getElementById("manualStatus");
+
+    const resultLocation = document.getElementById("resultLocation");
+    const resultCode = document.getElementById("resultCode");
+    const resultStatus = document.getElementById("resultStatus");
+
     const searchTypeField = document.getElementById("searchType");
     const searchCodeField = document.getElementById("searchCode");
     const searchBtn = document.getElementById("searchBtn");
     const searchResult = document.getElementById("searchResult");
-    const statusBox = document.getElementById("status");
-    const cameraStatusBox = document.getElementById("cameraStatus");
-    const manualStatusBox = document.getElementById("manualStatus");
-    const cameraNote = document.getElementById("cameraNote");
-    const focusRing = document.getElementById("focusRing");
-    const detectedType = document.getElementById("detectedType");
-    const liveDetectedText = document.getElementById("liveDetectedText");
-    const lastReadout = document.getElementById("lastReadout");
 
-    function hasStartedSelection() {
-      return Boolean(locationField.value.trim());
-    }
-
-    function setAppReadyState() {
-      appShell.classList.toggle("ready", hasStartedSelection());
-    }
-
-    function setLastReadout(value = "", label = "Dernière lecture") {
-      const cleanValue = String(value || "").trim();
-      if (!lastReadout) {
-        return;
-      }
-
-      lastReadout.innerHTML = cleanValue
-        ? `<strong>${label} :</strong> ${cleanValue}`
-        : `<strong>${label} :</strong> en attente`;
-    }
-
-    function setSearchResult(message, type = "") {
-      if (!searchResult) {
-        return;
-      }
-
-      searchResult.textContent = message;
-      searchResult.className = "search-result";
-      if (type === "ok") {
-        searchResult.style.borderColor = "rgba(74, 222, 128, 0.35)";
-      } else if (type === "error") {
-        searchResult.style.borderColor = "rgba(251, 113, 133, 0.35)";
-      } else {
-        searchResult.style.borderColor = "";
-      }
+    function showView(viewName) {
+      Object.entries(views).forEach(([name, node]) => {
+        node.classList.toggle("active", name === viewName);
+      });
     }
 
     function keepDigitsOnly(value) {
-      return String(value || "").replace(/\D+/g, "");
+      return String(value || "").replace(/\D+/g, "").slice(0, 4);
     }
 
     function buildBairCode(typeValue, numberValue) {
       const prefix = String(typeValue || "").trim();
       const digits = keepDigitsOnly(numberValue);
 
-      if (!prefix || !digits) {
+      if (!prefix || digits.length !== 4) {
         return "";
       }
 
       return `${prefix} ${digits}`;
     }
 
-    function getReaderVideo() {
-      return document.querySelector(`#${readerId} video`);
+    function isValidBairCode(value) {
+      return BAIR_PATTERN.test(String(value || "").trim());
     }
 
-    async function waitForScannerLibrary(timeoutMs = 4000) {
-      const startAt = Date.now();
+    function setStatus(target, message, type = "") {
+      if (!target) return;
 
-      while (Date.now() - startAt < timeoutMs) {
-        if (window.Html5Qrcode && typeof window.Html5Qrcode === "function") {
-          return true;
-        }
-        await new Promise((resolve) => window.setTimeout(resolve, 120));
+      target.textContent = message;
+      target.className = "status";
+      if (type) {
+        target.classList.add(type);
       }
-
-      return Boolean(window.Html5Qrcode && typeof window.Html5Qrcode === "function");
     }
 
-    function setLiveDetectedText(value = "", label = "Texte détecté") {
+    function setLastReadout(value = "", label = "Dernière lecture") {
       const cleanValue = String(value || "").trim();
+      lastReadout.innerHTML = cleanValue
+        ? `<strong>${label} :</strong> ${cleanValue}`
+        : `<strong>${label} :</strong> en attente`;
+    }
 
-      if (!liveDetectedText) {
-        return;
-      }
+    function setLiveDetectedText(value = "", label = "Lecture") {
+      const cleanValue = String(value || "").trim();
 
       if (!cleanValue) {
         liveDetectedText.textContent = "";
@@ -689,657 +698,6 @@
 
       liveDetectedText.innerHTML = `<strong>${label} :</strong> ${cleanValue}`;
       liveDetectedText.classList.remove("hidden");
-    }
-
-    function installBarcodeDetectorPolyfill() {
-      if (barcodeDetectorReady) {
-        return;
-      }
-
-      try {
-        window.BarcodeDetector.getSupportedFormats();
-        barcodeDetectorReady = true;
-        return;
-      } catch (error) {}
-
-      if (window.barcodeDetectorPolyfill && window.barcodeDetectorPolyfill.BarcodeDetectorPolyfill) {
-        window.BarcodeDetector = window.barcodeDetectorPolyfill.BarcodeDetectorPolyfill;
-        barcodeDetectorReady = true;
-      }
-    }
-
-    async function getCode128BarcodeDetector() {
-      installBarcodeDetectorPolyfill();
-
-      if (!window.BarcodeDetector || typeof window.BarcodeDetector !== "function") {
-        return null;
-      }
-
-      if (!code128Detector) {
-        try {
-          code128Detector = new window.BarcodeDetector({ formats: ["code_128"] });
-        } catch (error) {
-          code128Detector = null;
-        }
-      }
-
-      return code128Detector;
-    }
-
-    function extractCode128FromDetections(detections) {
-      if (!Array.isArray(detections) || !detections.length) {
-        return "";
-      }
-
-      const detection = detections.find((item) => {
-        const format = String((item && item.format) || "").toLowerCase();
-        return format === "code_128";
-      }) || detections[0];
-
-      return String((detection && detection.rawValue) || "").trim();
-    }
-
-    async function decodeCode128WithBarcodeDetector(source) {
-      const detector = await getCode128BarcodeDetector();
-      if (!detector || typeof detector.detect !== "function") {
-        return "";
-      }
-
-      try {
-        const detections = await detector.detect(source);
-        return extractCode128FromDetections(detections);
-      } catch (error) {
-        return "";
-      }
-    }
-
-    function clearIosFallbackLoop() {
-      iosFallbackLoopActive = false;
-      if (iosFallbackLoopTimer) {
-        window.clearTimeout(iosFallbackLoopTimer);
-        iosFallbackLoopTimer = null;
-      }
-    }
-
-    function getIosFallbackCanvasContext(width, height) {
-      if (!iosFallbackCanvas) {
-        iosFallbackCanvas = document.createElement("canvas");
-        iosFallbackContext = iosFallbackCanvas.getContext("2d", { willReadFrequently: true });
-      }
-
-      if (iosFallbackCanvas.width !== width || iosFallbackCanvas.height !== height) {
-        iosFallbackCanvas.width = width;
-        iosFallbackCanvas.height = height;
-      }
-
-      return iosFallbackContext;
-    }
-
-    function getOcrCanvasContext(width, height) {
-      if (!ocrCanvas) {
-        ocrCanvas = document.createElement("canvas");
-        ocrContext = ocrCanvas.getContext("2d", { willReadFrequently: true });
-      }
-
-      if (ocrCanvas.width !== width || ocrCanvas.height !== height) {
-        ocrCanvas.width = width;
-        ocrCanvas.height = height;
-      }
-
-      return ocrContext;
-    }
-
-    async function loadOcrWorker() {
-      if (!window.Tesseract || typeof window.Tesseract.createWorker !== "function") {
-        return null;
-      }
-
-      if (!ocrWorkerPromise) {
-        ocrWorkerPromise = (async () => {
-          const worker = await window.Tesseract.createWorker("eng");
-          if (typeof worker.setParameters === "function") {
-            await worker.setParameters({
-              tessedit_char_whitelist: OCR_CHAR_WHITELIST,
-              tessedit_pageseg_mode: "7",
-              preserve_interword_spaces: "1"
-            });
-          }
-          return worker;
-        })().catch((error) => {
-          ocrWorkerPromise = null;
-          throw error;
-        });
-      }
-
-      return ocrWorkerPromise;
-    }
-
-    function normalizeOcrText(rawText) {
-      const candidates = String(rawText || "")
-        .toUpperCase()
-        .split("\n")
-        .map((line) => line.replace(/[^A-Z0-9 -]/g, " ").replace(/\s+/g, " ").trim())
-        .filter(Boolean)
-        .filter((line) => line.length >= 5);
-
-      if (!candidates.length) {
-        return "";
-      }
-
-      const preferred = candidates.find((line) => /[A-Z]/.test(line) && /\d/.test(line));
-      const bestCandidate = preferred || candidates.sort((a, b) => b.length - a.length)[0] || "";
-      const compactCandidate = bestCandidate.replace(/\s+/g, " ").trim();
-
-      if (/^[A-Z0-9]{5,}\s\d{2,}$/.test(compactCandidate)) {
-        return compactCandidate;
-      }
-
-      if (/^[A-Z0-9]{7,}$/.test(compactCandidate.replace(/\s/g, ""))) {
-        return compactCandidate.replace(/^([A-Z0-9]{5,10})(\d{2,5})$/, "$1 $2");
-      }
-
-      return compactCandidate;
-    }
-
-    function prepareOcrCanvasFromSource(source, sourceWidth, sourceHeight, yStartRatio = 0.56, heightRatio = 0.24, threshold = 170) {
-      const cropWidth = Math.floor(sourceWidth * 0.92);
-      const cropHeight = Math.max(60, Math.floor(sourceHeight * heightRatio));
-      const cropX = Math.max(0, Math.floor((sourceWidth - cropWidth) / 2));
-      const cropY = Math.max(0, Math.min(sourceHeight - cropHeight, Math.floor(sourceHeight * yStartRatio)));
-      const scale = 2.6;
-      const targetWidth = Math.max(320, Math.floor(cropWidth * scale));
-      const targetHeight = Math.max(96, Math.floor(cropHeight * scale));
-      const context = getOcrCanvasContext(targetWidth, targetHeight);
-
-      if (!context) {
-        return null;
-      }
-
-      context.imageSmoothingEnabled = false;
-      context.fillStyle = "#ffffff";
-      context.fillRect(0, 0, targetWidth, targetHeight);
-      context.drawImage(
-        source,
-        cropX,
-        cropY,
-        cropWidth,
-        cropHeight,
-        0,
-        0,
-        targetWidth,
-        targetHeight
-      );
-
-      const imageData = context.getImageData(0, 0, targetWidth, targetHeight);
-      const { data } = imageData;
-      for (let index = 0; index < data.length; index += 4) {
-        const gray = Math.round((data[index] + data[index + 1] + data[index + 2]) / 3);
-        const boosted = gray > threshold ? 255 : 0;
-        data[index] = boosted;
-        data[index + 1] = boosted;
-        data[index + 2] = boosted;
-        data[index + 3] = 255;
-      }
-      context.putImageData(imageData, 0, 0);
-
-      return ocrCanvas;
-    }
-
-    function buildOcrAttemptCanvases(source, sourceWidth, sourceHeight) {
-      return [
-        prepareOcrCanvasFromSource(source, sourceWidth, sourceHeight, 0.54, 0.28, 185),
-        prepareOcrCanvasFromSource(source, sourceWidth, sourceHeight, 0.58, 0.24, 170),
-        prepareOcrCanvasFromSource(source, sourceWidth, sourceHeight, 0.62, 0.22, 155),
-        prepareOcrCanvasFromSource(source, sourceWidth, sourceHeight, 0.66, 0.18, 145),
-        prepareOcrCanvasFromSource(source, sourceWidth, sourceHeight, 0.50, 0.36, 175)
-      ].filter(Boolean);
-    }
-
-    async function recognizePrintedTextFromCanvas(canvas) {
-      if (!canvas || ocrInFlight) {
-        return "";
-      }
-
-      const worker = await loadOcrWorker();
-      if (!worker) {
-        return "";
-      }
-
-      ocrInFlight = true;
-      try {
-        const result = await worker.recognize(canvas);
-        return normalizeOcrText(result && result.data && result.data.text);
-      } finally {
-        ocrInFlight = false;
-      }
-    }
-
-    async function recognizePrintedTextFromVideoFrame() {
-      const video = getReaderVideo();
-      if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
-        return "";
-      }
-
-      const attempts = buildOcrAttemptCanvases(video, video.videoWidth, video.videoHeight);
-
-      for (const canvas of attempts) {
-        const text = await recognizePrintedTextFromCanvas(canvas);
-        if (text) {
-          return text;
-        }
-      }
-
-      return "";
-    }
-
-    async function createImageBitmapFromFile(file) {
-      return new Promise((resolve, reject) => {
-        const image = new Image();
-        const objectUrl = URL.createObjectURL(file);
-
-        image.onload = () => {
-          URL.revokeObjectURL(objectUrl);
-          resolve(image);
-        };
-        image.onerror = () => {
-          URL.revokeObjectURL(objectUrl);
-          reject(new Error("Impossible de lire l'image choisie."));
-        };
-        image.src = objectUrl;
-      });
-    }
-
-    async function recognizePrintedTextFromFile(file) {
-      const image = await createImageBitmapFromFile(file);
-      const attempts = buildOcrAttemptCanvases(image, image.naturalWidth, image.naturalHeight);
-
-      for (const canvas of attempts) {
-        const text = await recognizePrintedTextFromCanvas(canvas);
-        if (text) {
-          return text;
-        }
-      }
-
-      return "";
-    }
-
-    async function decodeCode128FromFileWithZbar(file) {
-      const fallbackModule = await loadIosFallbackScannerModule();
-      if (!fallbackModule || typeof fallbackModule.scanImageData !== "function") {
-        return "";
-      }
-
-      const image = await createImageBitmapFromFile(file);
-      const sourceWidth = image.naturalWidth;
-      const sourceHeight = image.naturalHeight;
-      const cropWidth = Math.floor(sourceWidth * 0.96);
-      const cropHeight = Math.max(120, Math.floor(sourceHeight * 0.42));
-      const cropX = Math.max(0, Math.floor((sourceWidth - cropWidth) / 2));
-      const cropY = Math.max(0, Math.floor((sourceHeight - cropHeight) / 2));
-      const targetWidth = Math.min(cropWidth, 1600);
-      const targetHeight = Math.max(140, Math.floor(cropHeight * (targetWidth / cropWidth)));
-      const context = getIosFallbackCanvasContext(targetWidth, targetHeight);
-
-      if (!context) {
-        return "";
-      }
-
-      context.drawImage(
-        image,
-        cropX,
-        cropY,
-        cropWidth,
-        cropHeight,
-        0,
-        0,
-        targetWidth,
-        targetHeight
-      );
-
-      const imageData = context.getImageData(0, 0, targetWidth, targetHeight);
-      const symbols = await fallbackModule.scanImageData(imageData);
-      return extractCode128FromSymbols(symbols);
-    }
-
-    async function loadIosFallbackScannerModule() {
-      if (!isLikelyIOS) {
-        return null;
-      }
-
-      if (!iosFallbackScannerModulePromise) {
-        iosFallbackScannerModulePromise = import(IOS_FALLBACK_SCANNER_MODULE_URL);
-      }
-
-      return iosFallbackScannerModulePromise;
-    }
-
-    function extractCode128FromSymbols(symbols) {
-      if (!Array.isArray(symbols) || !symbols.length) {
-        return "";
-      }
-
-      const code128Symbol = symbols.find((symbol) => {
-        const typeName = String((symbol && symbol.typeName) || "").toUpperCase();
-        return typeName === "CODE-128" || typeName === "CODE_128" || typeName === "CODE128";
-      }) || symbols[0];
-
-      if (!code128Symbol || typeof code128Symbol.decode !== "function") {
-        return "";
-      }
-
-      return String(code128Symbol.decode() || "").trim();
-    }
-
-    async function scanCurrentVideoFrameWithIosFallback() {
-      const video = getReaderVideo();
-      if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
-        return "";
-      }
-
-      const barcodeDetectorValue = await decodeCode128WithBarcodeDetector(video);
-      if (barcodeDetectorValue) {
-        return barcodeDetectorValue;
-      }
-
-      const fallbackModule = await loadIosFallbackScannerModule();
-      if (!fallbackModule || typeof fallbackModule.scanImageData !== "function") {
-        return "";
-      }
-
-      const sourceWidth = video.videoWidth;
-      const sourceHeight = video.videoHeight;
-      const cropWidth = Math.floor(sourceWidth * 0.92);
-      const cropHeight = Math.floor(sourceHeight * 0.34);
-      const cropX = Math.max(0, Math.floor((sourceWidth - cropWidth) / 2));
-      const cropY = Math.max(0, Math.floor((sourceHeight - cropHeight) / 2));
-      const targetWidth = Math.min(cropWidth, 1280);
-      const targetHeight = Math.max(120, Math.floor(cropHeight * (targetWidth / cropWidth)));
-      const context = getIosFallbackCanvasContext(targetWidth, targetHeight);
-
-      if (!context) {
-        return "";
-      }
-
-      context.drawImage(
-        video,
-        cropX,
-        cropY,
-        cropWidth,
-        cropHeight,
-        0,
-        0,
-        targetWidth,
-        targetHeight
-      );
-
-      const imageData = context.getImageData(0, 0, targetWidth, targetHeight);
-      const symbols = await fallbackModule.scanImageData(imageData);
-
-      return extractCode128FromSymbols(symbols);
-    }
-
-    async function handleDecodedCode(decodedText, decodedResult = null, forcedLabel = "") {
-      const cleanValue = String(decodedText || "").trim();
-
-      if (!cleanValue || hasHandledScan) {
-        return;
-      }
-
-      hasHandledScan = true;
-      setLiveDetectedText(cleanValue, forcedLabel || "Lecture");
-      resultField.value = cleanValue;
-      setLastReadout(cleanValue);
-      setInlineStatus(cameraStatusBox, "Validation du scan en cours...", "");
-      detectedType.textContent = forcedLabel
-        ? `Type détecté : ${forcedLabel}`
-        : decodedResult
-          ? `Type détecté : ${getDetectedFormatLabel(decodedResult)}`
-          : "Type détecté : Code 128 (fallback iPhone)";
-      setStatus("Code-barres détecté. Envoi vers Google Sheets en cours...", "");
-      await stopCamera();
-      await sendToGoogleSheets(cleanValue);
-      setControls();
-    }
-
-    async function runIosFallbackScanLoop() {
-      if (!isLikelyIOS || !cameraRunning || iosFallbackLoopActive) {
-        return;
-      }
-
-      iosFallbackLoopActive = true;
-      cameraNote.textContent = "Mode iPhone renforce actif : analyse Code 128 en continu pour ameliorer la lecture.";
-
-      const loop = async () => {
-        if (!cameraRunning || !iosFallbackLoopActive || hasHandledScan) {
-          clearIosFallbackLoop();
-          return;
-        }
-
-        try {
-          const decodedText = await scanCurrentVideoFrameWithIosFallback();
-
-          if (decodedText) {
-            setLiveDetectedText(decodedText, "Lecture live");
-            await handleDecodedCode(decodedText);
-            clearIosFallbackLoop();
-            return;
-          }
-
-          const now = Date.now();
-          if (!ocrInFlight && now - lastOcrAttemptAt > 1800) {
-            lastOcrAttemptAt = now;
-            const printedText = await recognizePrintedTextFromVideoFrame();
-            if (printedText) {
-              setLiveDetectedText(printedText, "Texte OCR live");
-              await handleDecodedCode(printedText, null, "Texte imprime sous le code-barres");
-              clearIosFallbackLoop();
-              return;
-            }
-          }
-        } catch (error) {
-          cameraNote.textContent = "Le mode iPhone renforce reste actif, avec tentative OCR du texte imprime sous le code-barres.";
-        }
-
-        iosFallbackLoopTimer = window.setTimeout(loop, 280);
-      };
-
-      loop();
-    }
-
-    function getSupportedFormats() {
-      if (!window.Html5QrcodeSupportedFormats) {
-        return undefined;
-      }
-
-      return [Html5QrcodeSupportedFormats.CODE_128]
-        .filter((format) => typeof format === "number");
-    }
-
-    function getDetectedFormatLabel(decodedResult) {
-      const candidates = [
-        decodedResult && decodedResult.result && decodedResult.result.format && decodedResult.result.format.formatName,
-        decodedResult && decodedResult.result && decodedResult.result.format && decodedResult.result.format.name,
-        decodedResult && decodedResult.result && decodedResult.result.format,
-        decodedResult && decodedResult.format && decodedResult.format.formatName,
-        decodedResult && decodedResult.format && decodedResult.format.name,
-        decodedResult && decodedResult.format
-      ];
-
-      const detected = candidates.find((value) => typeof value === "string" && value.trim());
-      return detected ? detected.replace(/_/g, " ") : "Inconnu";
-    }
-
-    function getScannerInstance() {
-      const formatsToSupport = getSupportedFormats();
-      return new Html5Qrcode(
-        readerId,
-        formatsToSupport ? { formatsToSupport } : undefined
-      );
-    }
-
-    function getScanBox(viewfinderWidth, viewfinderHeight) {
-      const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-      const isLandscape = viewfinderWidth > viewfinderHeight;
-
-      if (isLandscape) {
-        return {
-          width: Math.max(260, Math.floor(viewfinderWidth * 0.82)),
-          height: Math.max(120, Math.floor(minEdge * 0.36))
-        };
-      }
-
-      return {
-        width: Math.max(220, Math.floor(viewfinderWidth * 0.88)),
-        height: Math.max(110, Math.floor(minEdge * 0.30))
-      };
-    }
-
-    function resetTorchState() {
-      torchSupported = false;
-      torchEnabled = false;
-    }
-
-    function updateTorchButton() {
-      if (!cameraRunning) {
-        torchBtn.disabled = true;
-        torchBtn.textContent = "Flash";
-        return;
-      }
-
-      if (!torchSupported) {
-        torchBtn.disabled = true;
-        torchBtn.textContent = "Flash non pris en charge";
-        return;
-      }
-
-      torchBtn.disabled = false;
-      torchBtn.textContent = torchEnabled ? "Couper le flash" : "Activer le flash";
-    }
-
-    async function detectTorchAvailability() {
-      if (!qrCodeScanner || !cameraRunning || typeof qrCodeScanner.getRunningTrackCapabilities !== "function") {
-        resetTorchState();
-        updateTorchButton();
-        return;
-      }
-
-      try {
-        const capabilities = qrCodeScanner.getRunningTrackCapabilities();
-        torchSupported = Boolean(capabilities && capabilities.torch);
-      } catch (error) {
-        torchSupported = false;
-      }
-
-      updateTorchButton();
-    }
-
-    async function startScannerWithConfig(cameraConfig, scanConfig) {
-      qrCodeScanner = getScannerInstance();
-
-      await qrCodeScanner.start(
-        cameraConfig,
-        scanConfig,
-        async (decodedText, decodedResult) => {
-          await handleDecodedCode(decodedText, decodedResult);
-        },
-        () => {}
-      );
-    }
-
-    async function setTorch(enabled) {
-      if (!cameraRunning || !qrCodeScanner || !torchSupported || typeof qrCodeScanner.applyVideoConstraints !== "function") {
-        return;
-      }
-
-      await qrCodeScanner.applyVideoConstraints({
-        advanced: [{ torch: enabled }]
-      });
-
-      torchEnabled = enabled;
-      updateTorchButton();
-    }
-
-    async function toggleTorch() {
-      if (!torchSupported) return;
-
-      try {
-        await setTorch(!torchEnabled);
-        setStatus(torchEnabled ? "Flash activé." : "Flash désactivé.", "");
-      } catch (error) {
-        setStatus("Impossible de changer l'état du flash : " + error.message, "error");
-      }
-    }
-
-    function showFocusRing(clientX, clientY) {
-      const cameraBox = document.querySelector(".camera");
-      if (!cameraBox) return;
-
-      const rect = cameraBox.getBoundingClientRect();
-      const left = Math.min(Math.max(clientX - rect.left, 42), rect.width - 42);
-      const top = Math.min(Math.max(clientY - rect.top, 42), rect.height - 42);
-
-      focusRing.style.left = `${left}px`;
-      focusRing.style.top = `${top}px`;
-      focusRing.classList.remove("hidden");
-      focusRing.classList.add("visible");
-
-      window.clearTimeout(showFocusRing.timeoutId);
-      showFocusRing.timeoutId = window.setTimeout(() => {
-        focusRing.classList.remove("visible");
-        focusRing.classList.add("hidden");
-      }, 700);
-    }
-
-    async function focusCameraAtPoint(event) {
-      if (!cameraRunning || !qrCodeScanner) return;
-
-      const touch = (event.changedTouches && event.changedTouches[0]) || (event.touches && event.touches[0]);
-      const clientX = touch ? touch.clientX : event.clientX;
-      const clientY = touch ? touch.clientY : event.clientY;
-
-      if (typeof clientX !== "number" || typeof clientY !== "number") {
-        return;
-      }
-
-      showFocusRing(clientX, clientY);
-
-      if (typeof qrCodeScanner.getRunningTrackCapabilities !== "function" || typeof qrCodeScanner.applyVideoConstraints !== "function") {
-        return;
-      }
-
-      const video = getReaderVideo();
-      if (!video) return;
-
-      const rect = video.getBoundingClientRect();
-      const x = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
-      const y = Math.min(Math.max((clientY - rect.top) / rect.height, 0), 1);
-
-      try {
-        const capabilities = qrCodeScanner.getRunningTrackCapabilities() || {};
-        const advanced = [];
-
-        if (Array.isArray(capabilities.focusMode) && capabilities.focusMode.includes("continuous")) {
-          advanced.push({ focusMode: "continuous" });
-        }
-
-        if (capabilities.pointsOfInterest) {
-          advanced.push({ pointsOfInterest: [{ x, y }] });
-        }
-
-        if (!advanced.length) {
-          cameraNote.textContent = "La caméra est active, mais cet appareil ne permet pas la mise au point tactile depuis le navigateur.";
-          return;
-        }
-
-        await qrCodeScanner.applyVideoConstraints({ advanced });
-        cameraNote.textContent = "Mise au point demandée sur la zone touchée.";
-      } catch (error) {
-        cameraNote.textContent = "La mise au point tactile n'est pas disponible sur cet appareil.";
-      }
-    }
-
-    async function handleCameraTap(event) {
-      await focusCameraAtPoint(event);
     }
 
     function getResolvedLocation() {
@@ -1374,296 +732,338 @@
       if (!showLog) logTypeField.value = "";
       if (!showOther) otherLocationField.value = "";
 
-      setAppReadyState();
+      updateMovementControls();
+    }
 
-      if (baseLocation && !getResolvedLocation()) {
-        if (showChariot) {
-          setStatus("Choisis le numero du chariot pour ouvrir la caméra.", "");
-        } else if (showLog) {
-          setStatus("Choisis le type de LOG pour ouvrir la caméra.", "");
-        } else if (showOther) {
-          setStatus("Précise l'emplacement pour ouvrir la caméra.", "");
+    function updateMovementControls() {
+      const manualValue = buildBairCode(manualTypeField.value, manualCodeField.value);
+      manualSendBtn.disabled = !currentMovementLocation || !manualValue || sendInFlight;
+    }
+
+    function resetMovementChoice() {
+      locationField.value = "";
+      chariotNumberField.value = "";
+      logTypeField.value = "";
+      otherLocationField.value = "";
+      currentMovementLocation = "";
+      updateLocationFields();
+    }
+
+    function resetMovementScanState() {
+      hasHandledScan = false;
+      setLiveDetectedText("");
+      setLastReadout("");
+      setStatus(cameraStatusBox, "En attente d'un scan valide.");
+      setStatus(manualStatusBox, "En attente d'un envoi manuel.");
+      cameraPanel.classList.remove("hidden");
+      manualPanel.classList.add("hidden");
+      cameraNote.textContent = "La caméra se ferme automatiquement après 10 secondes si aucun scan valide n'est détecté.";
+      manualCodeField.value = "";
+      zoomWrap.classList.remove("visible");
+      zoomSupported = false;
+      updateMovementControls();
+    }
+
+    function resetResultView() {
+      resultLocation.innerHTML = "<strong>Emplacement :</strong> en attente";
+      resultCode.innerHTML = "<strong>Contenu du scan :</strong> en attente";
+      setStatus(resultStatus, "En attente.");
+    }
+
+    function cancelScanTimeout() {
+      if (scanTimeoutId) {
+        window.clearTimeout(scanTimeoutId);
+        scanTimeoutId = null;
+      }
+    }
+
+    function openManualFallback() {
+      cancelScanTimeout();
+      cameraPanel.classList.add("hidden");
+      manualPanel.classList.remove("hidden");
+      setStatus(cameraStatusBox, "Aucun scan valide détecté en 10 secondes.", "error");
+      cameraNote.textContent = "La caméra a été fermée. Utilise maintenant la saisie manuelle.";
+      updateMovementControls();
+    }
+
+    async function waitForScannerLibrary(timeoutMs = 4000) {
+      const startAt = Date.now();
+
+      while (Date.now() - startAt < timeoutMs) {
+        if (window.Html5Qrcode && typeof window.Html5Qrcode === "function") {
+          return true;
         }
+        await new Promise((resolve) => window.setTimeout(resolve, 120));
       }
+
+      return Boolean(window.Html5Qrcode && typeof window.Html5Qrcode === "function");
     }
 
-    function setStatus(message, type = "") {
-      statusBox.textContent = message;
-      statusBox.className = "status";
-      if (type) {
-        statusBox.classList.add(type);
+    function getSupportedFormats() {
+      if (!window.Html5QrcodeSupportedFormats) {
+        return undefined;
       }
+
+      return [window.Html5QrcodeSupportedFormats.CODE_128].filter((format) => typeof format === "number");
     }
 
-    function setInlineStatus(target, message, type = "") {
-      if (!target) return;
-
-      target.textContent = message;
-      target.className = "status inline-status";
-      if (type) {
-        target.classList.add(type);
-      }
+    function getScannerInstance() {
+      const formatsToSupport = getSupportedFormats();
+      return new window.Html5Qrcode(
+        readerId,
+        formatsToSupport ? { formatsToSupport } : undefined
+      );
     }
 
-    function setControls() {
-      const resolvedLocation = getResolvedLocation();
-      const canUseLocation = Boolean(resolvedLocation);
-      const manualBairCode = buildBairCode(manualTypeField.value, manualCodeField.value);
-      const searchBairCode = buildBairCode(searchTypeField.value, searchCodeField.value);
+    function getScanBox(viewfinderWidth, viewfinderHeight) {
+      const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+      const isLandscape = viewfinderWidth > viewfinderHeight;
 
-      restartBtn.disabled = cameraRunning || !canUseLocation;
-      stopBtn.disabled = !cameraRunning;
-      manualSendBtn.disabled = !canUseLocation || !manualBairCode;
-      searchBtn.disabled = searchInFlight || !canUseLocation || !searchBairCode;
-      setAppReadyState();
-      updateTorchButton();
-    }
-
-    async function startCamera() {
-      if (cameraRunning || cameraStarting) return;
-
-      if (!getResolvedLocation()) {
-        setStatus("Choisis d'abord un emplacement avant d'ouvrir la caméra.", "error");
-        setControls();
-        return;
-      }
-
-      const scannerLibraryLoaded = await waitForScannerLibrary();
-
-      if (!scannerLibraryLoaded) {
-        setStatus("La librairie de scan n'est pas encore chargée. Recharge la page puis réessaie.", "error");
-        setControls();
-        return;
-      }
-
-      setStatus("Ouverture de la caméra...", "");
-
-      try {
-        cameraStarting = true;
-        setLiveDetectedText("");
-        hasHandledScan = false;
-        lastOcrAttemptAt = 0;
-        clearIosFallbackLoop();
-        resetTorchState();
-        const preferredScanConfig = {
-          fps: isLikelyIOS ? 6 : 10,
-          qrbox: getScanBox,
-          disableFlip: false
+      if (isLandscape) {
+        return {
+          width: Math.max(260, Math.floor(viewfinderWidth * 0.82)),
+          height: Math.max(120, Math.floor(minEdge * 0.36))
         };
-        const fallbackScanConfig = {
-          fps: isLikelyIOS ? 6 : 10,
-          qrbox: { width: 250, height: 250 },
-          disableFlip: false
-        };
-        const cameraAttempts = [
-          { cameraConfig: { facingMode: "environment" }, scanConfig: preferredScanConfig },
-          { cameraConfig: { facingMode: "environment" }, scanConfig: fallbackScanConfig }
-        ];
-        let started = false;
-        let lastError = null;
-
-        for (const attempt of cameraAttempts) {
-          try {
-            await startScannerWithConfig(attempt.cameraConfig, attempt.scanConfig);
-            started = true;
-            break;
-          } catch (error) {
-            lastError = error;
-            if (qrCodeScanner) {
-              try {
-                await qrCodeScanner.clear();
-              } catch (clearError) {}
-            }
-            qrCodeScanner = null;
-          }
-        }
-
-        if (!started && typeof Html5Qrcode.getCameras === "function") {
-          try {
-            const cameras = await Html5Qrcode.getCameras();
-            const rearCamera = cameras.find((camera) => /back|rear|environment/gi.test(camera.label || ""));
-            const selectedCameraId = (rearCamera || cameras[0] || {}).id;
-
-            if (selectedCameraId) {
-              await startScannerWithConfig(selectedCameraId, preferredScanConfig);
-              started = true;
-            }
-          } catch (error) {
-            lastError = error;
-          }
-        }
-
-        if (!started) {
-          throw lastError || new Error("Aucune caméra compatible n'a pu être ouverte.");
-        }
-
-        cameraRunning = true;
-        cameraNote.textContent = isLikelyIOS
-          ? "Astuce iPhone : touche l'image pour tenter la mise au point si Safari l'autorise."
-          : "Astuce : touche l'image pour tenter une mise au point locale si l'appareil le permet.";
-        await detectTorchAvailability();
-        if (isLikelyIOS) {
-          void runIosFallbackScanLoop();
-        }
-        setStatus("Caméra active. Place le code-barres devant l'objectif.", "");
-        setControls();
-      } catch (error) {
-        setStatus("Impossible d'ouvrir la caméra : " + error.message, "error");
-        resetTorchState();
-        qrCodeScanner = null;
-        cameraRunning = false;
-        setControls();
-      } finally {
-        cameraStarting = false;
       }
+
+      return {
+        width: Math.max(220, Math.floor(viewfinderWidth * 0.88)),
+        height: Math.max(110, Math.floor(minEdge * 0.30))
+      };
     }
 
     async function stopCamera() {
-      if (cameraStopping) {
-        return;
-      }
+      cancelScanTimeout();
+
+      if (cameraStopping) return;
 
       if (!qrCodeScanner || !cameraRunning) {
-        setLiveDetectedText("");
-        clearIosFallbackLoop();
-        resetTorchState();
         cameraRunning = false;
-        setControls();
+        qrCodeScanner = null;
+        zoomWrap.classList.remove("visible");
         return;
       }
 
       try {
         cameraStopping = true;
-        setLiveDetectedText("");
-        clearIosFallbackLoop();
-        if (torchSupported && torchEnabled) {
-          await setTorch(false);
-        }
         await qrCodeScanner.stop();
         await qrCodeScanner.clear();
       } catch (error) {
-        setStatus("La caméra a rencontré un souci à l'arrêt : " + error.message, "error");
       } finally {
-        setLiveDetectedText("");
-        clearIosFallbackLoop();
-        resetTorchState();
-        qrCodeScanner = null;
         cameraRunning = false;
-        setControls();
+        qrCodeScanner = null;
         cameraStopping = false;
+        zoomWrap.classList.remove("visible");
       }
     }
 
-    async function sendToGoogleSheets(scannedValue = resultField.value.trim()) {
-      const location = getResolvedLocation();
-      const qrValue = scannedValue.trim();
-      const currentManualValue = buildBairCode(manualTypeField.value, manualCodeField.value);
-      const targetStatusBox = qrValue === currentManualValue ? manualStatusBox : cameraStatusBox;
+    async function detectZoomAvailability() {
+      zoomSupported = false;
+      zoomWrap.classList.remove("visible");
 
-      if (sendInFlight) {
+      if (!qrCodeScanner || typeof qrCodeScanner.getRunningTrackCapabilities !== "function") {
         return;
       }
-
-      if (!location) {
-        setStatus("Choisis un emplacement avant l'envoi.", "error");
-        setInlineStatus(targetStatusBox, "Choisis un emplacement avant l'envoi.", "error");
-        return;
-      }
-
-      if (!qrValue) {
-        setStatus("Aucune donnée de code-barres à envoyer pour l'instant.", "error");
-        setInlineStatus(targetStatusBox, "Aucune donnée à envoyer.", "error");
-        return;
-      }
-
-      setStatus("Envoi des données vers Google Sheets...", "");
-      setInlineStatus(targetStatusBox, "Envoi en cours...", "");
 
       try {
-        sendInFlight = true;
-        const response = await fetch(SCRIPT_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "text/plain;charset=utf-8"
-          },
-          body: JSON.stringify({
-            action: "save",
-            location,
-            qrData: qrValue
-          })
-        });
+        const capabilities = qrCodeScanner.getRunningTrackCapabilities() || {};
+        const zoom = capabilities.zoom;
 
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-          throw new Error(data.message || "La requête Google Sheets a échoué.");
+        if (!zoom || typeof zoom.min !== "number" || typeof zoom.max !== "number") {
+          return;
         }
 
-        setStatus("Donnée envoyée avec succès vers Google Sheets.", "ok");
-        setInlineStatus(targetStatusBox, "Validation enregistrée avec succès.", "ok");
+        zoomRange.min = String(zoom.min);
+        zoomRange.max = String(zoom.max);
+        zoomRange.step = String(zoom.step || 0.1);
+        zoomRange.value = String(zoom.min);
+        zoomSupported = true;
+        zoomWrap.classList.add("visible");
       } catch (error) {
-        setStatus("Échec de l'envoi : " + error.message, "error");
-        setInlineStatus(targetStatusBox, "Échec de l'envoi : " + error.message, "error");
+      }
+    }
+
+    async function applyZoom(value) {
+      if (!zoomSupported || !qrCodeScanner || typeof qrCodeScanner.applyVideoConstraints !== "function") {
+        return;
+      }
+
+      try {
+        await qrCodeScanner.applyVideoConstraints({
+          advanced: [{ zoom: Number(value) }]
+        });
+      } catch (error) {
+      }
+    }
+
+    async function startCamera() {
+      if (!currentMovementLocation || cameraRunning || cameraStarting) {
+        return;
+      }
+
+      const scannerLoaded = await waitForScannerLibrary();
+      if (!scannerLoaded) {
+        setStatus(cameraStatusBox, "La librairie de scan n'est pas chargée.", "error");
+        openManualFallback();
+        return;
+      }
+
+      try {
+        cameraStarting = true;
+        qrCodeScanner = getScannerInstance();
+
+        await qrCodeScanner.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: getScanBox,
+            disableFlip: false
+          },
+          async (decodedText) => {
+            await handleScanCandidate(decodedText);
+          },
+          () => {}
+        );
+
+        cameraRunning = true;
+        setStatus(cameraStatusBox, "Caméra active. Scan en attente...");
+        await detectZoomAvailability();
+        cancelScanTimeout();
+        scanTimeoutId = window.setTimeout(async () => {
+          if (!hasHandledScan) {
+            await stopCamera();
+            openManualFallback();
+          }
+        }, 10000);
+      } catch (error) {
+        setStatus(cameraStatusBox, "Impossible d'ouvrir la caméra : " + error.message, "error");
+        openManualFallback();
+      } finally {
+        cameraStarting = false;
+      }
+    }
+
+    async function handleScanCandidate(decodedText) {
+      const cleanValue = String(decodedText || "").trim();
+
+      if (!cleanValue || hasHandledScan) {
+        return;
+      }
+
+      setLiveDetectedText(cleanValue, "Lecture");
+      setLastReadout(cleanValue);
+
+      if (!isValidBairCode(cleanValue)) {
+        setStatus(cameraStatusBox, "Code ignoré : format attendu BAIR91C XXXX ou BAIR 91 XXXX.", "error");
+        return;
+      }
+
+      hasHandledScan = true;
+      setStatus(cameraStatusBox, "Scan valide détecté. Envoi en cours...");
+      await stopCamera();
+      await submitMovement(cleanValue, "scan");
+    }
+
+    async function sendToGoogleSheets(location, qrData) {
+      const response = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+          action: "save",
+          location,
+          qrData
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "La requête Google Sheets a échoué.");
+      }
+
+      return data;
+    }
+
+    function showResultView(location, code, sourceLabel) {
+      resultLocation.innerHTML = `<strong>Emplacement :</strong> ${location}`;
+      resultCode.innerHTML = `<strong>Contenu du scan :</strong> ${code}<br><strong>Origine :</strong> ${sourceLabel}`;
+      setStatus(resultStatus, "Envoi en cours...");
+      showView("result");
+    }
+
+    async function submitMovement(code, sourceLabel) {
+      if (!currentMovementLocation || !isValidBairCode(code) || sendInFlight) {
+        return;
+      }
+
+      sendInFlight = true;
+      showResultView(currentMovementLocation, code, sourceLabel === "scan" ? "Scan caméra" : "Saisie manuelle");
+
+      try {
+        await sendToGoogleSheets(currentMovementLocation, code);
+        setStatus(resultStatus, "Envoyé avec succès.", "ok");
+      } catch (error) {
+        setStatus(resultStatus, "Échec de l'envoi : " + error.message, "error");
       } finally {
         sendInFlight = false;
-        setControls();
+        updateMovementControls();
       }
     }
 
-    async function maybeAutoStartCamera() {
-      if (!getResolvedLocation()) {
-        if (cameraRunning) {
-          await stopCamera();
-        }
-        setControls();
+    async function launchMovementFlow() {
+      const resolvedLocation = getResolvedLocation();
+
+      if (!resolvedLocation) {
         return;
       }
 
-      if (cameraRunning) {
-        setControls();
-        return;
-      }
-
+      currentMovementLocation = resolvedLocation;
+      movementLocationPill.textContent = `Emplacement : ${currentMovementLocation}`;
+      resetMovementScanState();
+      showView("movementScan");
       await startCamera();
     }
 
-    async function restartCamera() {
-      hasHandledScan = false;
-      setLiveDetectedText("");
-      resultField.value = "";
-      manualCodeField.value = "";
-      detectedType.textContent = "Type détecté : en attente";
-      setControls();
-      await startCamera();
+    async function exitMovementFlow(goTo = "home") {
+      await stopCamera();
+      resetMovementChoice();
+      resetMovementScanState();
+      resetResultView();
+      showView(goTo);
     }
 
     async function sendManualCode() {
       const manualValue = buildBairCode(manualTypeField.value, manualCodeField.value);
 
       if (!manualValue) {
-        setStatus("Saisis un numero avant l'envoi manuel.", "error");
-        setInlineStatus(manualStatusBox, "Saisis un numero avant l'envoi manuel.", "error");
+        setStatus(manualStatusBox, "Saisis un code au format 4 chiffres.", "error");
+        updateMovementControls();
         return;
       }
 
-      resultField.value = manualValue;
+      if (!isValidBairCode(manualValue)) {
+        setStatus(manualStatusBox, "Le format doit être BAIR91C XXXX ou BAIR 91 XXXX.", "error");
+        return;
+      }
+
+      setStatus(manualStatusBox, "Envoi manuel en cours...");
       setLastReadout(manualValue, "Saisie manuelle");
-      detectedType.textContent = "Type détecté : saisie manuelle";
-      await sendToGoogleSheets(manualValue);
+      await submitMovement(manualValue, "manuel");
     }
 
     async function searchBairMovement() {
       const qrData = buildBairCode(searchTypeField.value, searchCodeField.value);
 
       if (!qrData) {
-        setSearchResult("Saisis un numéro BAIR avant la recherche.", "error");
-        setControls();
+        setStatus(searchResult, "Saisis une BAIR avec un numéro à 4 chiffres.", "error");
         return;
       }
 
       searchInFlight = true;
-      setControls();
-      setSearchResult("Recherche du dernier mouvement en cours...");
+      searchBtn.disabled = true;
+      setStatus(searchResult, "Recherche du dernier mouvement en cours...");
 
       try {
         const response = await fetch(SCRIPT_URL, {
@@ -1684,19 +1084,20 @@
         }
 
         if (!data.found) {
-          setSearchResult(`Aucun mouvement trouvé pour ${qrData}.`, "error");
+          setStatus(searchResult, `Aucun mouvement trouvé pour ${qrData}.`, "error");
           return;
         }
 
-        setSearchResult(
+        setStatus(
+          searchResult,
           `BAIR : ${data.qrData}\nDernier emplacement : ${data.location}\nDernier mouvement : ${data.timestamp}`,
           "ok"
         );
       } catch (error) {
-        setSearchResult("Échec de la recherche : " + error.message, "error");
+        setStatus(searchResult, "Échec de la recherche : " + error.message, "error");
       } finally {
         searchInFlight = false;
-        setControls();
+        searchBtn.disabled = false;
       }
     }
 
@@ -1707,55 +1108,86 @@
       welcomeBtn.addEventListener("click", () => {
         welcomeOverlay.classList.add("hidden");
       });
-      restartBtn.addEventListener("click", restartCamera);
-      stopBtn.addEventListener("click", stopCamera);
-      torchBtn.addEventListener("click", toggleTorch);
-      manualSendBtn.addEventListener("click", sendManualCode);
-      searchBtn.addEventListener("click", searchBairMovement);
-      document.querySelector(".camera").addEventListener("pointerup", handleCameraTap);
+
+      goMovementBtn.addEventListener("click", () => {
+        resetMovementChoice();
+        resetMovementScanState();
+        showView("movementLocation");
+      });
+
+      goConsultationBtn.addEventListener("click", () => {
+        setStatus(searchResult, "Aucune recherche lancée.");
+        showView("consultation");
+      });
+
+      backFromLocationBtn.addEventListener("click", async () => {
+        await exitMovementFlow("home");
+      });
+
+      cancelMovementBtn.addEventListener("click", async () => {
+        await exitMovementFlow("home");
+      });
+
+      newScanBtn.addEventListener("click", async () => {
+        await exitMovementFlow("home");
+      });
+
+      backFromConsultationBtn.addEventListener("click", () => {
+        showView("home");
+      });
+
       locationField.addEventListener("change", async () => {
         updateLocationFields();
-        setControls();
-        await maybeAutoStartCamera();
-      });
-      chariotNumberField.addEventListener("change", async () => {
-        setControls();
-        await maybeAutoStartCamera();
-      });
-      logTypeField.addEventListener("change", async () => {
-        setControls();
-        await maybeAutoStartCamera();
-      });
-      otherLocationField.addEventListener("input", async () => {
-        setControls();
-        if (otherLocationField.value.trim()) {
-          await maybeAutoStartCamera();
+        if (getResolvedLocation()) {
+          await launchMovementFlow();
         }
       });
-      resultField.addEventListener("input", setControls);
-      manualTypeField.addEventListener("change", setControls);
+
+      chariotNumberField.addEventListener("change", async () => {
+        updateMovementControls();
+        if (getResolvedLocation()) {
+          await launchMovementFlow();
+        }
+      });
+
+      logTypeField.addEventListener("change", async () => {
+        updateMovementControls();
+        if (getResolvedLocation()) {
+          await launchMovementFlow();
+        }
+      });
+
+      otherLocationField.addEventListener("input", () => {
+        updateMovementControls();
+      });
+
+      otherLocationField.addEventListener("change", async () => {
+        if (getResolvedLocation()) {
+          await launchMovementFlow();
+        }
+      });
+
+      manualTypeField.addEventListener("change", updateMovementControls);
       manualCodeField.addEventListener("input", () => {
         manualCodeField.value = keepDigitsOnly(manualCodeField.value);
-        setControls();
+        updateMovementControls();
       });
-      searchTypeField.addEventListener("change", setControls);
+      manualSendBtn.addEventListener("click", sendManualCode);
+
+      zoomRange.addEventListener("input", async () => {
+        await applyZoom(zoomRange.value);
+      });
+
       searchCodeField.addEventListener("input", () => {
         searchCodeField.value = keepDigitsOnly(searchCodeField.value);
-        setControls();
       });
+      searchBtn.addEventListener("click", searchBairMovement);
 
       updateLocationFields();
-      setLastReadout("");
-      setInlineStatus(cameraStatusBox, "En attente d'un scan.");
-      setInlineStatus(manualStatusBox, "En attente d'un envoi manuel.");
-      setSearchResult("Aucune recherche lancée.");
-      setControls();
-      installBarcodeDetectorPolyfill();
-
-      if (isLikelyIOS) {
-        void getCode128BarcodeDetector().catch(() => {});
-        void loadOcrWorker().catch(() => {});
-      }
+      updateMovementControls();
+      resetMovementScanState();
+      resetResultView();
+      setStatus(searchResult, "Aucune recherche lancée.");
     }
 
     if (document.readyState === "loading") {
